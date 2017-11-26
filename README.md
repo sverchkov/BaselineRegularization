@@ -4,7 +4,7 @@ baseline-regularization
 Introduction
 ------------
 
-Fratures
+Features
 --------
 
 Example
