@@ -1,4 +1,4 @@
-baseline-regularization
+BaselineRegularization
 =======================
 
 Introduction
@@ -11,17 +11,27 @@ Example
 -------
 ```r
 
-#TODO
-# Connect to db, extract relevant data
+# Connect to Database
+# TODO
+
+# Extract relevant data
+br_data <- prepareBRData( data, event )
+
 # Parametrize task
+parameters <- defineBRParameters()
+
 # Fit model
+fit <- fitBaselineRegularization( br_data, parameters )
+
 # Print results
+# TODO
+
 ```
 
 Technology
 ----------
 
-`beseline-regularization` is an R package.
+BaselineRegularization is an R package.
 
 System Requirements
 -------------------
@@ -33,6 +43,7 @@ Dependencies
 
  * dplyr
  * glmnet
+ * Matrix
  
 Getting Started
 ---------------
@@ -46,12 +57,12 @@ Getting Involved
 License
 -------
 
-`baseline-regularization` is licensed under Apache License 2.0
+BaselineRegularization is licensed under Apache License 2.0
 
 Development
 -----------
 
-`baseline-regularization` is being developed in R Studio.
+BaselineRegularization is being developed in R Studio.
 
 ### Development status
 
