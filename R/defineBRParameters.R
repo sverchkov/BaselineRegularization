@@ -9,8 +9,8 @@
 #' @export
 defineBRParameters <- function(
   lambda1 = 0,
-  lambda2,
-  lambda3,
+  lambda2 = 0.5,
+  lambda3 = 0.1,
   threshold = 1e-4,
   maxOuterLoopIterations = 60,
   maxInnerLoopIterations = 200 ) {
@@ -18,6 +18,8 @@ defineBRParameters <- function(
     lambda1 = lambda1,
     lambda2 = lambda2,
     lambda3 = lambda3,
-    threshold = threshold
+    threshold = threshold,
+    maxOuterLoopIterations = maxOuterLoopIterations,
+    maxInnerLoopIterations = maxInnerLoopIterations
   )
 }
