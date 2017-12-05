@@ -5,7 +5,7 @@
 #' @param drug_era A dataframe-like view of the OMOP DRUG_ERA table
 #' @param condition_era A dataframe-like view of the OMOP CONDITION_ERA table
 #' @param condition The condition_concept_id of the condition of interest
-#' @param tying Parameter tying mode, "none", "interval", or "occurence" (default)
+#' @param tying Parameter tying mode, "interval", or "occurence" (default)
 #' @param risk_window The number of days right after a drug era during which the patient is considered still under exposure
 #' @param minimum_duration The number of days a patient must be under observation to be included in the analysis
 #' @param independent_observation_periods Whether to treat distinct observation periods from one patient as distinct "patients"
@@ -38,7 +38,8 @@ prepareBRData <- function ( observation_period
     drug_era_events %>%
     filter( drug_era_start_date >= observation_period_start_date, drug_era_start_date <= observation_period_end_date ) %>%
     select( event_era_id = drug_era_id
-          , event_type = "drug start"
+          , event_type = "drug"
+          , event_flag = 1
           , person_id
           , concept_id = drug_concept_id
           , event_date = drug_era_start_date
@@ -49,7 +50,8 @@ prepareBRData <- function ( observation_period
   drug_end_events <-
     drug_era_events %>%
     select( event_era_id = drug_era_id
-          , event_type = "drug end"
+          , event_type = "drug"
+          , event_flag = -1
           , person_id
           , concept_id = drug_concept_id
           , event_date = drug_era_end_date + 1 # Check that this is how you add a day
@@ -60,8 +62,11 @@ prepareBRData <- function ( observation_period
 
   condition_events <-
     condition_era %>%
+    filter( condition_concept_id == event ) %>%
+    inner.join( working_observation_periods, by = c( person_id = "person_id" ) ) %>%
     select( event_era_id = condition_era_id
-          , event_type = "condition start"
+          , event_type = "condition"
+          , event_flag = 1
           , person_id
           , concept_id = condition_concept_id
           , event_date = condition_era_start_date
@@ -71,18 +76,20 @@ prepareBRData <- function ( observation_period
     filter( event_date >= observation_period_start_date, event_date <= observation_period_end_date )
 
   # bind rows
-  events <- bind_rows( drug_start_events, drug_end_events, condition_events )
+  features <- bind_rows( drug_start_events, drug_end_events, condition_events ) %>%
+    spread( key = concept_id, value = event_flag, fill = 0, sep = "_" ) %>%
+    arrange( observation_period_id, event_date ) %>%
+    mutate( interval = seq_along( event_date ), subject = dense_rank( observation_period_id ) )
 
-  # the distinct time breaks become the intervals. We sort them
-  timebreaks <- events %>%
-    distinct( event_date, observation_period_id ) %>%
-    arrange( observation_period_if, event_date ) %>%
-    mutate( interval = row_number() )
+  if ( tying == "occurence" )
+    stop( "occurence tying not implemented yet" )
+
+  n <- features[[ paste0( "concept_id_", event ) ]]
+
 
   # # # #
 
-  pre_table <- spread( data = events, key = concept_id, value = 1, fill = 0, sep = "_" ) 
-  
+  pre_table <-
   stop("Not yet implemented")
 
   currConfig = subset(config,indx==x);
