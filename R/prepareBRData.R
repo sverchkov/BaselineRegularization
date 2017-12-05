@@ -10,6 +10,8 @@
 #' @export
 prepareBRData <- function ( data, event, tying = "occurence", risk_window = 0, minimum_duration = 0 ){
 
+  pre_table <- spread( data = events, key = concept_id, value = 1, fill = 0, sep = "_" ) 
+  
   stop("Not yet implemented")
 
   currConfig = subset(config,indx==x);
