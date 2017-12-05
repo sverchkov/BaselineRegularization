@@ -81,6 +81,8 @@ prepareBRData <- function ( observation_period
 
   # # # #
 
+  pre_table <- spread( data = events, key = concept_id, value = 1, fill = 0, sep = "_" ) 
+  
   stop("Not yet implemented")
 
   currConfig = subset(config,indx==x);
