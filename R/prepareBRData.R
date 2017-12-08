@@ -62,24 +62,12 @@ prepareBRData <- function ( con = NULL
       warning("Risk window expansion may have introduced drug era overlaps")
     } else drug_era
 
-  # Function for joining with observation period table and filtering events to fall within periods
-  # (it's a function because we do this three times, to keep work in the DB)
-  attach_observation_periods <- function ( df ){
-    df %>%
-      # join with observation periods
-      inner_join( working_observation_periods, by = c( person_id = "person_id" ) ) %>%
-      # filter to events falling within observation periods
-      filter( event_date >= observation_period_start_date, event_date <= observation_period_end_date )
-  }
-
   drug_start_events <- working_drug_era %>%
     select( event_era_id = drug_era_id
           , person_id
           , concept_id = drug_concept_id
           , event_date = drug_era_start_date ) %>%
-    mutate( event_flag = 1 ) %>%
-    attach_observation_periods() %>%
-    as_tibble()
+    mutate( event_flag = 1 )
 
   drug_end_events <- working_drug_era %>%
     mutate( event_date = drug_era_end_date + as.integer(1) ) %>%
@@ -87,9 +75,7 @@ prepareBRData <- function ( con = NULL
           , person_id
           , concept_id = drug_concept_id
           , event_date ) %>%
-    mutate( event_flag = -1 ) %>%
-    attach_observation_periods() %>%
-    as_tibble()
+    mutate( event_flag = as.integer(-1) )
   # Code notes on the above:
   # We cast 1 to integer when adding to the date because dbplyr converts numerals to decimals by default
   # We add 1 to the end date since the "event" is "no longer being exposed," this also folds in with how we turn this
@@ -104,24 +90,29 @@ prepareBRData <- function ( con = NULL
           , person_id
           , concept_id = condition_concept_id
           , event_date = condition_era_start_date ) %>%
-    mutate( event_flag = 1 ) %>%
-    attach_observation_periods() %>%
-    as_tibble()
+    mutate( event_flag = as.integer(1) )
 
   # Get features
-
-  features <- bind_rows( drug_start_events, drug_end_events, condition_events ) %>% # combine events
+  all_events <- # combine events
+    drug_start_events %>% dplyr::union( drug_end_events ) %>% dplyr::union( condition_events ) %>%
+    # join with observation periods
+    inner_join( working_observation_periods, by = c( person_id = "person_id" ) ) %>%
+    # filter to events falling within observation periods
+    filter( event_date >= observation_period_start_date, event_date <= observation_period_end_date ) %>%
     # get a dense indexing of observation periods (may not be strictly necessary)
     mutate( obs_period = dense_rank( observation_period_id ) )
 
   # Bookkeeping: save the observation period mapping
-  obs_id_map <- features %>% distinct( observation_period_id, obs_period )
+  obs_id_map <- all_events %>% distinct( observation_period_id, obs_period )
 
-  features <- features %>%
+  # Make feature matrix
+  features <- all_events %>%
     # Clean things up a bit
     select( -event_era_id, -person_id, -observation_period_id, -observation_period_start_date, -period_type_concept_id ) %>%
+    # This is where we have to move things to memory
+    collect() %>%
     # get a 1-column-per-feature representation
-    spread( key = concept_id, value = event_flag, fill = 0, sep = "_" ) %>%
+    spread( key = concept_id, value = event_flag, fill = as.integer(0), sep = "_" ) %>%
     # merge rows that correspond to the same date in the same observation period: first group
     group_by( obs_period, event_date, observation_period_end_date ) %>%
     # Then sum
@@ -140,8 +131,8 @@ prepareBRData <- function ( con = NULL
 
   # Fill exposure matrix (we marked the start of each exposure with a 1 and the day after the end with a -1 above. By
   # adding the value of the previous cell to each cell we get 1s in every interval during which the patient is exposed )
-  features1 <- features %>%
-    mutate_at( vars( starts_with( "concept_id_" ) ), funs( . + lag( . ) ) )
+  features <- features %>%
+    mutate_at( vars( starts_with( "concept_id_" ) ), cumsum )
 
   X_transpose <- features %>% ungroup() %>% select( starts_with( "concept_id" ) )
 
@@ -149,6 +140,10 @@ prepareBRData <- function ( con = NULL
     features %>%
     select( interval_length = lead( event_date, default = observation_period_end_date ) - event_date ) %>%
     ungroup()
+
+  # Note:
+  # This process does not generate an interval for the time period between the beginning of the observation period and
+  # the first event.
 
   period_index <- features %>% ungroup() %>% select( obs_period )
 
