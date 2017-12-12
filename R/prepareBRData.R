@@ -120,7 +120,14 @@ prepareBRData <- function ( con = NULL
     # Group by observation periods
     group_by( obs_period ) %>%
     # sort by event date within each observation period
-    arrange( event_date, .by_group = TRUE )
+    arrange( obs_period, event_date ) %>%
+    # compute interval lengths
+    mutate( interval_length = lead( event_date, default = min( observation_period_end_date ) ) - event_date )
+
+  # Note:
+  # This process does not generate an interval for the time period between the beginning of the observation period and
+  # the first event.
+
 
   # Get the column name of the event we're targeting
   concept_id_event = paste0( "concept_id_", event )
@@ -134,19 +141,6 @@ prepareBRData <- function ( con = NULL
   features <- features %>%
     mutate_at( vars( starts_with( "concept_id_" ) ), cumsum )
 
-  X_transpose <- features %>% ungroup() %>% select( starts_with( "concept_id" ) )
-
-  interval_lengths <-
-    features %>%
-    select( interval_length = lead( event_date, default = observation_period_end_date ) - event_date ) %>%
-    ungroup()
-
-  # Note:
-  # This process does not generate an interval for the time period between the beginning of the observation period and
-  # the first event.
-
-  period_index <- features %>% ungroup() %>% select( obs_period )
-
   if ( tying == "occurence" )
     stop( "occurence tying not implemented yet" )
   if ( tying == "interval" )
@@ -154,10 +148,10 @@ prepareBRData <- function ( con = NULL
 
   # Return
   list(
-    X = t( Matrix( X_transpose ) ),
+    X = data.matrix( features %>% select( starts_with( "concept_id" ) ) ),
     Z = Z,
-    l = interval_lengths$interval_length,
+    l = as.numeric( features$interval_length ), # Conversion to numeric from difftime
     n = n,
-    patients = period_index$obs_period
+    patients = features$obs_period
   )
 }
