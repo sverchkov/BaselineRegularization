@@ -28,6 +28,7 @@ prepareBRData <- function ( con = NULL
                           , minimum_duration = 0
                           , independent_observation_periods = TRUE ){
 
+  if ( !( tying %in% c("occurrence", "interval" ) ) ) stop( "Invalid 'tying' parameter supplied." )
   if ( !is.null( con ) ){
 
     tables <- getDBTables( con )
@@ -105,10 +106,20 @@ prepareBRData <- function ( con = NULL
   # Bookkeeping: save the observation period mapping
   obs_id_map <- all_events %>% distinct( observation_period_id, obs_period )
 
+  # Make events for the start of observation periods
+  obs_start_events <- all_events %>%
+    distinct( obs_period, observation_period_end_date, event_date = observation_period_start_date ) %>%
+    mutate( concept_id = NA, event_flag = 1 )
+
+  # Build the column name of the ADE we're targeting (same as what 'spread' below will generate)
+  concept_id_event = paste0( "concept_id_", event )
+
   # Make feature matrix
   features <- all_events %>%
+    # Add observation period start 'events'
+    dplyr::union( obs_start_events ) %>%
     # Clean things up a bit
-    select( -event_era_id, -person_id, -observation_period_id, -observation_period_start_date, -period_type_concept_id ) %>%
+    select( concept_id, event_date, event_flag, observation_period_end_date, obs_period ) %>%
     # This is where we have to move things to memory
     collect() %>%
     # get a 1-column-per-feature representation
@@ -117,41 +128,41 @@ prepareBRData <- function ( con = NULL
     group_by( obs_period, event_date, observation_period_end_date ) %>%
     # Then sum
     summarize_all( sum ) %>%
+    # rename target concept
+    rename( ade_occurrence = concept_id_event, observation_start = concept_id_NA ) %>%
     # Group by observation periods
     group_by( obs_period ) %>%
     # sort by event date within each observation period
     arrange( obs_period, event_date ) %>%
     # compute interval lengths
-    mutate( interval_length = lead( event_date, default = min( observation_period_end_date ) ) - event_date )
-
-  # Note:
-  # This process does not generate an interval for the time period between the beginning of the observation period and
-  # the first event.
-
-
-  # Get the column name of the event we're targeting
-  concept_id_event = paste0( "concept_id_", event )
-
-  # Get the event occurence vector
-  n <- features[[ concept_id_event ]]
-  features[[ concept_id_event ]] = NULL
-
-  # Fill exposure matrix (we marked the start of each exposure with a 1 and the day after the end with a -1 above. By
-  # adding the value of the previous cell to each cell we get 1s in every interval during which the patient is exposed )
-  features <- features %>%
+    mutate( interval_length = lead( event_date, default = min( observation_period_end_date ) ) - event_date ) %>%
+    # Fill exposure matrix (we marked the start of each exposure with a 1 and the day after the end with a -1 above. By
+    # adding the value of the previous cell to each cell we get 1s in every interval during which the patient is exposed )
     mutate_at( vars( starts_with( "concept_id_" ) ), cumsum )
 
-  if ( tying == "occurence" )
-    stop( "occurence tying not implemented yet" )
-  if ( tying == "interval" )
-    Z = Diagonal( length( n ) )
+  # Parameter tying determines the Z matrix
+  Z = switch( tying
+            , occurrence = { # Occurence tying
+              z_elements <- features %>%
+                ungroup() %>%
+                # Select sorting variables and the variables we use to determine segment boundaries
+                select( obs_period, event_date, ade_occurrence, observation_start ) %>%
+                # This basically adds 1 every time an ADE occurs or a new observation period starts, giving us the
+                # column indeces for the Z matrix. Dense rank is used to make sure we don't have gaps (i.e. when the
+                # observation period starts on an ADE we don't want to incerment the index by 2).
+                mutate( parameter = dense_rank( cumsum( ade_occurrence + observation_start ) )
+                      , interval = row_number( parameter ) )
+              # Make the sparse matrix
+              sparseMatrix( i = z_elements$interval, j = z_elements$parameter, x = 1 )
+            }
+            , interval = Diagonal( nrow( features ) ) ) # Interval tying
 
   # Return
   list(
     X = data.matrix( features %>% select( starts_with( "concept_id" ) ) ),
     Z = Z,
     l = as.numeric( features$interval_length ), # Conversion to numeric from difftime
-    n = n,
+    n = features$ade_occurrence,
     patients = features$obs_period
   )
 }
