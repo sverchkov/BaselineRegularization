@@ -1,12 +1,14 @@
 Package: BaselineRegularization
-Title: What the Package Does (one line, title case)
+Title: Baseline Regularization
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: c(
+  person("Yuriy", "Sverchkov", email = "yuriy.sverchkov@wisc.edu", role = c("aut", "cre")),
+  person("Charles", "Kwong", email = "zhaobin.kuang@gmail.com", role = "aut" ) )
+Description: Implementation of Baseline Regularization by Zhaobin et al. (KDD 2017) targeted to work with OMOP databases.
 Depends: R (>= 3.4.2)
-License: What license is it under?
+License: Apache-2.0
 Encoding: UTF-8
 LazyData: true
-Imports: Matrix, dbplyr, dplyr, tidyr, glmnet
-Suggests: testthat
+Imports: Matrix, dbplyr, dplyr, tidyr, glmnet, futile.logger
+Suggests: testthat, DBI, RPostgresSQL
 RoxygenNote: 6.0.1
