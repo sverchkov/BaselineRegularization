@@ -73,8 +73,10 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
       rm(mdlBeta);
 
       # t step
-      tau =  as.numeric(t(Z)%*%(brBetaWeights*(psi-X%*%beta)))/omega;
-      tOld = t; t = bflsa::bwflsa(segIndx,tau,omega,lam2); t = Matrix(t);
+      tau <- as.numeric(t(Z)%*%(brBetaWeights*(psi-X%*%beta)))/omega
+      tOld <- t
+      t <- blockwiseWeightedFusedLassoSignalApproximator(segIndx,tau,omega,lam2)
+      t <- Matrix(t)
 
       # stopping criteria
       absInner = getAbsErr(rBind(tOld,betaOld),rBind(t,beta));

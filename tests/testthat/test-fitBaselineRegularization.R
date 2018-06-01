@@ -35,5 +35,5 @@ test_that("mini interval-tying model fit", {
 
   fit = fitBaselineRegularization( brData )
 
-  expect_equal( fit$res, 4.664561e-05 )
+  expect_equal( fit$res, 1.226038e-09 )
 })
