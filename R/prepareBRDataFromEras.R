@@ -31,16 +31,14 @@ prepareBRDataFromEras <- function ( con = NULL
   if ( !( tying %in% c("occurrence", "interval" ) ) ) stop( "Invalid 'tying' parameter supplied." )
   if ( !is.null( con ) ){
 
-    tables <- getDBTables( con )
-
     if ( !is.null( observation_period ) ) warning( "observation_period table will be read from the database")
-    observation_period <- tables$observation_period
+    observation_period <- getDBTable( con, "observation_period" )
 
     if ( !is.null( drug_era ) ) warning( "drug_era table will be read from the database")
-    drug_era <- tables$drug_era
+    drug_era <- getDBTable( con, "drug_era" )
 
     if ( !is.null( condition_era ) ) warning( "condition_era table will be read from the database" )
-    condition_era <- tables$condition_era
+    condition_era <- getDBTable( con, "condition_era" )
 
   } else {
     if ( is.null( observation_period ) || is.null( drug_era ) || is.null( condition_era ) )
