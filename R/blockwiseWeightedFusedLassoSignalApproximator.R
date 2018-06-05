@@ -1,10 +1,13 @@
 #' Blockwise weighted fused lasso signal approximator
 #'
-#' @param indx
-#' @param y
+#' Blockwise weighted fused lasso signal approximator adapted from the glmgen library / package by
+#' Taylor Arnold, Ryan Tibshirani, and Veerun Sadhanala.
+#'
+#' @param indx block indeces
+#' @param y y
 #' @param w weights
-#' @param lambda /lambda
-#' @return /beta
+#' @param lambda lambda
+#' @return beta
 #' @author Charles Kwong
 #' @useDynLib BaselineRegularization, .registration = TRUE
 blockwiseWeightedFusedLassoSignalApproximator = function(indx,y,w,lambda){
