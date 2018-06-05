@@ -101,6 +101,9 @@ prepareBRDataFromEras <- function ( con = NULL
     # get a dense indexing of observation periods (may not be strictly necessary)
     mutate( obs_period = dense_rank( observation_period_id ) )
 
+  # Bookkeeping: save the observation period mapping
+  obs_id_map <- all_events %>% distinct( observation_period_id, obs_period )
+
   # Return
   prepareBRDataFromEvents( all_events, event, tying )
 }

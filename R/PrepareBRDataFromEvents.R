@@ -4,9 +4,6 @@
 #' @import dplyr
 prepareBRDataFromEvents <- function ( all_events, event, tying ){
 
-  # Bookkeeping: save the observation period mapping
-  obs_id_map <- all_events %>% distinct( observation_period_id, obs_period )
-
   # Make events for the start of observation periods
   obs_start_events <- all_events %>%
     distinct( obs_period, observation_period_end_date, event_date = observation_period_start_date )
