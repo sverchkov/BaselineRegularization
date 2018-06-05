@@ -48,7 +48,7 @@ prepareBRDataFromEras <- function ( con = NULL
   if ( ! independent_observation_periods )
     stop( "Current implementation only supports independent observation periods." )
   else {
-    working_observation_periods <- filter( observation_period, observation_period_end_date - observation_period_end_date >= minimum_duration )
+    working_observation_periods <- filter( observation_period, observation_period_end_date - observation_period_start_date >= minimum_duration )
   }
 
   #drug_era_events <- inner_join( working_observation_periods, drug_era, by = c( person_id = "person_id" ) )
