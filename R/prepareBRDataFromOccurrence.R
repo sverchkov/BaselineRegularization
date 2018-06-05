@@ -28,11 +28,14 @@ prepareBRDataFromOccurrence <- function( con = NULL
                                        , condition_occurrence = "CONDITION_OCCURRENCE"
                                        , visit_occurrence = "VISIT_OCCURRENCE"
                                        , event
-                                       , tying = "occurence"
+                                       , tying = "occurrence"
                                        , risk_window = 0
                                        , minimum_duration = 0 ){
 
-  if ( !( tying %in% c("occurrence", "interval" ) ) ) stop( "Invalid 'tying' parameter supplied." )
+  if ( !( tying %in% c("occurrence", "interval" ) ) ) {
+    stop( flog.fatal( "Invalid 'tying' parameter (%s) supplied.", tying ) )
+  }
+
   if ( !is.null( con ) ){
 
     if ( isSingleString( drug_exposure ) ){
@@ -40,14 +43,14 @@ prepareBRDataFromOccurrence <- function( con = NULL
       drug_exposure <- getDBTable( con, drug_exposure )
     }
 
-    if ( isSingleString( condition_occurence ) ){
+    if ( isSingleString( condition_occurrence ) ){
       flog.info( "Using condition occurrence table '%s' from the database.", condition_occurrence )
       condition_occurrence <- getDBTable( con, condition_occurrence )
     }
 
     if ( isSingleString( visit_occurrence ) ){
       flog.info( "Using visit occurrence table '%s' from the database.", visit_occurrence )
-      visit_occurence <- getDBTable( con, visit_occurrence )
+      visit_occurrence <- getDBTable( con, visit_occurrence )
     }
   }
 

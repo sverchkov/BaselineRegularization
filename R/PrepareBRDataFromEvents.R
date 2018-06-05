@@ -46,27 +46,40 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
     mutate( drug_number = dense_rank( concept_id ) )
 
   # ADE occurences
-  ade_intervals <- all_events %>%
-    filter( concept_id == event ) %>%
-    # We only need obs period and event date
-    select( obs_period, event_date ) %>%
-    # Get interval numbers
-    inner_join( event_times, by = c( obs_period = "obs_period", event_date = "event_date" ) ) %>%
-    # We only need interval numbers
-    select( interval_number ) %>%
-    # Sort by intervals
-    arrange( interval_number )
+  ade_intervals <- if ( T ){
+    all_events %>%
+      filter( concept_id == event ) %>%
+      # We only need obs period and event date, and we don't count multiple occurrences per interval
+      distinct( obs_period, event_date ) %>%
+      # Get interval numbers
+      inner_join( event_times, by = c( obs_period = "obs_period", event_date = "event_date" ) ) %>%
+      # We only need interval numbers
+      select( interval_number ) %>%
+      # Sort by intervals
+      arrange( interval_number )
+  } else { # Keeping this code here in case we want to count ADEs per interval
+    all_events %>%
+      filter( concept_id == event ) %>%
+      # We only need obs period and event date
+      select( obs_period, event_date ) %>%
+      # Get interval numbers
+      inner_join( event_times, by = c( obs_period = "obs_period", event_date = "event_date" ) ) %>%
+      # We only need interval numbers
+      select( interval_number ) %>%
+      # Sort by intervals
+      arrange( interval_number )
+  }
 
   ##
   ## Everything above this point didn't require executing the SQL if we were working in a db
   ##
 
   # We'll be referring to the number of intervals a lot
-  number_of_intervals <- (
+  number_of_intervals <- as.integer( (
     event_times %>%
-      summarize( n_intervals = max( interval_number ) ) %>%
+      summarize( n_intervals = max( interval_number, na.rm = T ) ) %>%
       collect()
-  )$n_intervals
+  )$n_intervals )
 
   # Interval lengths
   interval_details <- event_times %>% select( interval_length, obs_period ) %>% collect()
@@ -100,7 +113,9 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
                   # Sort by intervals
                   arrange( interval_number ) %>%
                   # Get distance to next break
-                  mutate( tie_length = lead( interval_number, default = number_of_intervals ) - interval_number ) %>%
+                  mutate( lead_interval = lead( interval_number ) ) %>%
+                  mutate( lead_interval = ifelse( is.na( lead_interval ), number_of_intervals, lead_interval ) ) %>%
+                  mutate( tie_length = lead_interval - interval_number ) %>%
                   collect()
 
                 # Make the diagonal matrix
