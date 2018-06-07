@@ -4,33 +4,31 @@
 #' @import dplyr
 prepareBRDataFromEvents <- function ( all_events, event, tying ){
 
-  # Make events for the start of observation periods
+  # Make events for the ends of observation periods
   obs_start_events <- all_events %>%
-    distinct( obs_period, observation_period_end_date, event_date = observation_period_start_date )
-
-  # Build the column name of the ADE we're targeting (same as what 'spread' below will generate)
-  concept_id_event = paste0( "concept_id_", event )
+    select( obs_period, event_date = observation_period_start_date, observation_period_end_date ) %>%
+    distinct()
 
   # Make list of event times
   event_times <- all_events %>%
     # We just need the times
     select( obs_period, event_date, observation_period_end_date ) %>%
     # Add the start-of-observation events
-    dplyr::union( obs_start_events ) %>%
+    union_all( obs_start_events ) %>%
     # Get distinct
     distinct() %>%
+    # Get days to end of obs period for each event
+    transmute( obs_period, event_date, days_to_end = observation_period_end_date - event_date ) %>%
     # Sort
     arrange( obs_period, event_date ) %>%
     # Get interval numbering
     mutate( interval_number = row_number( ) ) %>%
     # Group by observation periods
     group_by( obs_period ) %>%
-    # Get interval end time
-    mutate( interval_end = lead( event_date ) ) %>%
-    # Replace NA by observation period end
-    mutate( interval_end = ifelse( is.na( interval_end ), observation_period_end_date, interval_end ) ) %>%
-    # Compute interval lengths
-    mutate( interval_length = interval_end - event_date ) %>%
+    # Get next interval's days to end, catch unsupported DB op
+    attemptWithoutOrWithCollect( function( t ){ mutate( t, next_interval_days_to_end = lead( days_to_end ) ) } ) %>%
+    # Interval length = next interval days to end - this interval days to end (if not last)
+    mutate( interval_length = ifelse( is.na( next_interval_days_to_end ), days_to_end, days_to_end - next_interval_days_to_end ) ) %>%
     # Ungroup
     ungroup() %>%
     # Clean up
@@ -41,7 +39,7 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
     # Features don't contain the target event
     filter( concept_id != event ) %>%
     # Get event features
-    inner_join( event_times, by = c( obs_period = "obs_period", event_date = "event_date" ) ) %>%
+    left_join( event_times, by = c( obs_period = "obs_period", event_date = "event_date" ) ) %>%
     # Get a dense numbering of drugs
     mutate( drug_number = dense_rank( concept_id ) )
 
@@ -109,12 +107,12 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
                   # We only need interval numbers
                   select( interval_number )
 
+                # Sort by intervals
                 z_elements <- ade_intervals %>% union( start_intervals ) %>%
-                  # Sort by intervals
                   arrange( interval_number ) %>%
                   # Get distance to next break
-                  mutate( lead_interval = lead( interval_number ) ) %>%
-                  mutate( lead_interval = ifelse( is.na( lead_interval ), number_of_intervals, lead_interval ) ) %>%
+                  attemptWithoutOrWithCollect( function( t ) t %>% mutate( lead_interval = lead( interval_number ) ) ) %>%
+                  mutate( lead_interval = ifelse( is.na( lead_interval ), number_of_intervals+1L, lead_interval ) ) %>%
                   mutate( tie_length = lead_interval - interval_number ) %>%
                   collect()
 
