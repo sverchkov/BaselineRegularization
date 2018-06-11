@@ -55,6 +55,7 @@ getEventsFromOccurrence <- function( con
       observation_period_end_date = max( date, na.rm = TRUE ) ) %>%
     ungroup() %>%
     filter( observation_period_end_date - observation_period_start_date > as.integer( minimum_duration ) ) %>%
+    collectIfDBIs() %>%
     mutate( obs_period = dense_rank( person_id ) )
 
   valid_persons <- observation_periods %>% select( person_id )
