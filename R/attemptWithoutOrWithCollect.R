@@ -9,11 +9,14 @@
 #' @import dplyr
 #' @import futile.logger
 attemptWithoutOrWithCollect <- function ( the_table, the_function ) {
-  tryCatch(
+  flog.debug("Entering attemptWithoutOrWithCollect")
+  result <- tryCatch(
     the_function( the_table ),
     error = function( e ){
       flog.warn( "Caught %s, trying workaround.", as.character(e) )
       the_function( collect( the_table ) )
     }
   )
+  flog.debug("Exiting attemptWithoutOrWithCollect")
+  return ( result )
 }
