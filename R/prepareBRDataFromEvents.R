@@ -43,6 +43,7 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
     # Get event features
     left_join( event_times, by = c( obs_period = "obs_period", event_date = "event_date" ) ) %>%
     # Get a dense numbering of drugs
+    collectIfDBIs() %>%
     mutate( drug_number = dense_rank( concept_id ) )
 
   # ADE occurences
