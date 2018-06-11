@@ -15,7 +15,7 @@
 #' @param independent_observation_periods Whether to treat distinct observation periods from one patient as distinct
 #' "patients." Default value and only current accepted value is TRUE.
 #' @return An object containing the matrices X, Z, y
-#' @import tidyr
+#' # maybe import tidyr
 #' @import dplyr
 #' @export
 prepareBRDataFromEras <- function ( con = NULL
