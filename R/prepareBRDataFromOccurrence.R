@@ -42,7 +42,8 @@ prepareBRDataFromOccurrence <- function( con = NULL
     condition_occurrence = condition_occurrence,
     visit_occurrence = visit_occurrence,
     event = event,
-    risk_window = risk_window )
+    risk_window = risk_window,
+    minimum_duration = minimum_duration )
 
   flog.info("Handing over the event table")
 

@@ -8,6 +8,7 @@ getEventsFromOccurrence <- function( con
                                    , visit_occurrence
                                    , event
                                    , risk_window
+                                   , minimum_duration
                                    )
 {
   if ( !is.null( con ) ){
