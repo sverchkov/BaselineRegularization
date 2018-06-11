@@ -22,11 +22,13 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
     # Sort
     arrange( obs_period, event_date ) %>%
     # Get interval numbering
+    collectIfDBIs() %>%
     mutate( interval_number = row_number( ) ) %>%
     # Group by observation periods
     group_by( obs_period ) %>%
     # Get next interval's days to end, catch unsupported DB op
-    attemptWithoutOrWithCollect( function( t ){ mutate( t, next_interval_days_to_end = lead( days_to_end ) ) } ) %>%
+    collectIfDBIs() %>%
+    mutate( next_interval_days_to_end = lead( days_to_end ) ) %>%
     # Interval length = next interval days to end - this interval days to end (if not last)
     mutate( interval_length = ifelse( is.na( next_interval_days_to_end ), days_to_end, days_to_end - next_interval_days_to_end ) ) %>%
     # Ungroup
@@ -95,7 +97,7 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
 
   # Fill exposure matrix (we marked the start of each exposure with a 1 and the day after the end with a -1 above. By
   # adding the value of the previous cell to each cell we get 1s in every interval during which the patient is exposed )
-  X <- apply( X, 2, cumsum )
+  X <- pmin( apply( X, 2, cumsum ), 1 )
 
   # Parameter tying determines the Z matrix
   Z = switch( tying
@@ -111,7 +113,8 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
                 z_elements <- ade_intervals %>% union( start_intervals ) %>%
                   arrange( interval_number ) %>%
                   # Get distance to next break
-                  attemptWithoutOrWithCollect( function( t ) t %>% mutate( lead_interval = lead( interval_number ) ) ) %>%
+                  collectIfDBIs() %>%
+                  mutate( lead_interval = lead( interval_number ) ) %>%
                   mutate( lead_interval = ifelse( is.na( lead_interval ), number_of_intervals+1L, lead_interval ) ) %>%
                   mutate( tie_length = lead_interval - interval_number ) %>%
                   collect()
