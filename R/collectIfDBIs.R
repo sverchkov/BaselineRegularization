@@ -9,6 +9,10 @@
 #' @import futile.logger
 collectIfDBIs <- function ( the_table, connection_class = "SQLiteConnection" ) {
 
+  flog.trace( "Table class:", class(the_table), capture = T )
+  flog.trace( "Source class:", class(the_table$src), capture = T )
+  flog.trace( "Connection class:", class(the_table$src$con), capture = T )
+
   # Check for sqlite connection
   if( connection_class %in% class( the_table$src$con ) ) {
     flog.trace( "Detected %s connection collecting to avoid unsupported op", connection_class )
