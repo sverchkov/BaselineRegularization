@@ -2,8 +2,7 @@
 #'
 #' @import dplyr
 #' @import futile.logger
-getEventsFromOccurrence <- function( con
-                                   , drug_exposure
+getEventsFromOccurrence <- function( drug_exposure
                                    , condition_occurrence
                                    , visit_occurrence
                                    , event
@@ -11,23 +10,6 @@ getEventsFromOccurrence <- function( con
                                    , minimum_duration
                                    )
 {
-  if ( !is.null( con ) ){
-
-    if ( isSingleString( drug_exposure ) ){
-      flog.info( "Using drug exposure table '%s' from the database.", drug_exposure )
-      drug_exposure <- getDBTable( con, drug_exposure )
-    }
-
-    if ( isSingleString( condition_occurrence ) ){
-      flog.info( "Using condition occurrence table '%s' from the database.", condition_occurrence )
-      condition_occurrence <- getDBTable( con, condition_occurrence )
-    }
-
-    if ( isSingleString( visit_occurrence ) ){
-      flog.info( "Using visit occurrence table '%s' from the database.", visit_occurrence )
-      visit_occurrence <- getDBTable( con, visit_occurrence )
-    }
-  }
 
   # Derive observation period per person
   observation_times <-
@@ -56,7 +38,6 @@ getEventsFromOccurrence <- function( con
       observation_period_end_date = max( date, na.rm = TRUE ) ) %>%
     ungroup() %>%
     filter( observation_period_end_date - observation_period_start_date > as.integer( minimum_duration ) ) %>%
-    collectIfDBIs() %>%
     mutate( obs_period = dense_rank( person_id ) )
 
   valid_persons <- observation_periods %>% select( person_id )

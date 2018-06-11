@@ -22,12 +22,10 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
     # Sort
     arrange( obs_period, event_date ) %>%
     # Get interval numbering
-    collectIfDBIs() %>%
     mutate( interval_number = row_number( ) ) %>%
     # Group by observation periods
     group_by( obs_period ) %>%
     # Get next interval's days to end, catch unsupported DB op
-    collectIfDBIs() %>%
     mutate( next_interval_days_to_end = lead( days_to_end ) ) %>%
     # Interval length = next interval days to end - this interval days to end (if not last)
     mutate( interval_length = ifelse( is.na( next_interval_days_to_end ), days_to_end, days_to_end - next_interval_days_to_end ) ) %>%
@@ -43,7 +41,6 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
     # Get event features
     left_join( event_times, by = c( obs_period = "obs_period", event_date = "event_date" ) ) %>%
     # Get a dense numbering of drugs
-    collectIfDBIs() %>%
     mutate( drug_number = dense_rank( concept_id ) )
 
   # ADE occurences
@@ -114,7 +111,6 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
                 z_elements <- ade_intervals %>% union( start_intervals ) %>%
                   arrange( interval_number ) %>%
                   # Get distance to next break
-                  collectIfDBIs() %>%
                   mutate( lead_interval = lead( interval_number ) ) %>%
                   mutate( lead_interval = ifelse( is.na( lead_interval ), number_of_intervals+1L, lead_interval ) ) %>%
                   mutate( tie_length = lead_interval - interval_number ) %>%

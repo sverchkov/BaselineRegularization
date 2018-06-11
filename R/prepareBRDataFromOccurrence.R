@@ -20,7 +20,6 @@
 #' "patients." Default value and only current accepted value is TRUE.
 #' @return An object containing the matrices X, Z, y
 #' @import futile.logger
-#' @import tidyr
 #' @import dplyr
 #' @export
 prepareBRDataFromOccurrence <- function( con = NULL
@@ -36,8 +35,33 @@ prepareBRDataFromOccurrence <- function( con = NULL
     stop( flog.fatal( "Invalid 'tying' parameter (%s) supplied.", tying ) )
   }
 
+  if ( !is.null( con ) ){
+
+    if ( isSingleString( drug_exposure ) ){
+      flog.info( "Using drug exposure table '%s' from the database.", drug_exposure )
+      drug_exposure <- getDBTable( con, drug_exposure )
+    }
+
+    if ( isSingleString( condition_occurrence ) ){
+      flog.info( "Using condition occurrence table '%s' from the database.", condition_occurrence )
+      condition_occurrence <- getDBTable( con, condition_occurrence )
+    }
+
+    if ( isSingleString( visit_occurrence ) ){
+      flog.info( "Using visit occurrence table '%s' from the database.", visit_occurrence )
+      visit_occurrence <- getDBTable( con, visit_occurrence )
+    }
+  }
+
+  if( class( con ) == "SQLiteConnection" ){
+    flog.warn( "SQLite compatibility not implemented yet, will do all work in memory" )
+    drug_exposure <- drug_exposure %>% collect()
+    condition_occurrence <- condition_occurrence %>% collect()
+    if( !is.null( visit_occurrence ) )
+      visit_occurrence <- visit_occurrence %>% collect()
+  }
+
   events <- getEventsFromOccurrence(
-    con = con,
     drug_exposure = drug_exposure,
     condition_occurrence = condition_occurrence,
     visit_occurrence = visit_occurrence,
