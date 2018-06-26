@@ -16,11 +16,11 @@ getEventsFromOccurrence <- function( drug_exposure
     union_all( drug_exposure %>% select( person_id, date = drug_exposure_start_date ),
                drug_exposure %>%
                  filter( !is.na( drug_exposure_end_date ) ) %>%
-                 transmute( person_id, date = drug_exposure_end_date + 1L ) ) %>%
+                 transmute( person_id, date = drug_exposure_end_date ) ) %>%
     union_all( condition_occurrence %>% select( person_id, date = condition_start_date ) ) %>%
     union_all( condition_occurrence %>%
                  filter( !is.na( condition_end_date ) ) %>%
-                 transmute( person_id, date = condition_end_date + 1L ) )
+                 transmute( person_id, date = condition_end_date ) )
 
   # If there are visit events for patients, include them for the sake of the timeline
   if ( !is.null( visit_occurrence ) ){
@@ -28,7 +28,7 @@ getEventsFromOccurrence <- function( drug_exposure
       union_all( visit_occurrence %>% select( person_id, date = visit_start_date ) ) %>%
       union_all( visit_occurrence %>%
                    filter( !is.na( visit_end_date ) ) %>%
-                   transmute( person_id, date = visit_end_date + 1L ) )
+                   transmute( person_id, date = visit_end_date ) )
   }
 
   observation_periods <- observation_times %>%
@@ -38,7 +38,7 @@ getEventsFromOccurrence <- function( drug_exposure
       observation_period_end_date = max( date, na.rm = TRUE ) ) %>%
     ungroup() %>%
     filter( observation_period_end_date - observation_period_start_date > as.integer( minimum_duration ) ) %>%
-    mutate( obs_period = dense_rank( person_id ) )
+    mutate( obs_period_id = person_id )
 
   valid_persons <- observation_periods %>% select( person_id )
 
