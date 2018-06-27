@@ -61,6 +61,7 @@ getEventsFromOccurrence <- function( drug_exposure
 
   # Make table in the db since it will be reused
   flog.trace("Computing intermediate drug durations table")
+  drug_durations %>% explain()
   drug_durations <- drug_durations %>% compute()
 
   # Return value
