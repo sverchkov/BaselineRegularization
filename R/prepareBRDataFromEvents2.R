@@ -25,7 +25,9 @@ prepareBRDataFromEvents2 <- function ( all_events, event, tying ){
     # Sort
     arrange( obs_period_id, event_date ) %>%
     # Query DB
-    collect() %>%
+    collect()
+  
+  event_times <- event_times %>%
     # Get dense observation period numbering
     mutate( obs_period = dense_rank( obs_period_id ) ) %>%
     # Get interval numbering
@@ -118,7 +120,9 @@ prepareBRDataFromEvents2 <- function ( all_events, event, tying ){
                 z_elements <- ade_intervals %>% union( start_intervals ) %>%
                   arrange( interval_number ) %>%
                   # Query DB
-                  collect() %>%
+                  collect()
+                
+                z_elements <- z_elements %>%
                   # Get distance to next break
                   mutate( lead_interval = lead( interval_number ) ) %>%
                   mutate( lead_interval = ifelse( is.na( lead_interval ), number_of_intervals+1L, lead_interval ) ) %>%
