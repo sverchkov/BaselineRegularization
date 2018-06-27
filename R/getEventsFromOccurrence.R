@@ -49,9 +49,7 @@ getEventsFromOccurrence <- function( drug_exposure
     transmute( person_id
                , concept_id = drug_concept_id
                , drug_exposure_start_date
-               , drug_exposure_end_date = ifelse( is.na( drug_exposure_end_date )
-                                                  , drug_exposure_start_date
-                                                  , drug_exposure_end_date )
+               , drug_exposure_end_date = pmax( drug_exposure_start_date, drug_exposure_end_date, na.rm = T )
     )
 
   if ( risk_window > 0 )
@@ -65,7 +63,7 @@ getEventsFromOccurrence <- function( drug_exposure
                event_flag = 1L ),
     drug_durations %>%
       transmute( person_id, concept_id,
-                 event_date = drug_exposure_end_date + as.difftime( 1, units = "days" ),
+                 event_date = drug_exposure_end_date + 1L,
                  event_flag = -1L ) ) %>%
     union_all( condition_occurrence %>%
                  inner_join( valid_persons, by = "person_id" ) %>%
