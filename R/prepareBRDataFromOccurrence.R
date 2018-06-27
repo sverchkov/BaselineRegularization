@@ -68,7 +68,7 @@ prepareBRDataFromOccurrence <- function( con = NULL
   if( "SQLiteConnection" == class( con ) ||
       ( ( "tbl_dbi" %in% class( events ) ) &&
         ( "src_dbi" %in% class( events$src ) ) &&
-        ( "SQLiteConnection" == class( events$src$con ) ) ){
+        ( "SQLiteConnection" == class( events$src$con ) ) ) ){
     flog.warn( "SQLite detected, will do more work in memory" )
 
     # Return
