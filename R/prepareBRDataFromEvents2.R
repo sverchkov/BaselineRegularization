@@ -4,6 +4,9 @@
 #' @import dplyr
 prepareBRDataFromEvents2 <- function ( all_events, event, tying ){
 
+  # Make sure dates are treated as dates
+  all_events <- all_events %>% mutate_at( vars( ends_with( "date" ) ), as.Date )
+  
   # Make events for the ends of observation periods
   obs_start_events <- all_events %>%
     select( obs_period_id, event_date = observation_period_start_date, observation_period_end_date ) %>%
