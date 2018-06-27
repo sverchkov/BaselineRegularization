@@ -57,7 +57,8 @@ getEventsFromOccurrence <- function( drug_exposure
 
   if ( risk_window > 0 )
     drug_durations <- drug_durations %>%
-    mutate( drug_exposure_end_date = drug_exposure_end_date + risk_window )
+    mutate( drug_exposure_end_date = drug_exposure_end_date + risk_window ) %>%
+    compute()
 
   # Return value
   union_all( drug_durations %>%
