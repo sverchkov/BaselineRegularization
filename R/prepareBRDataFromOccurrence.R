@@ -53,14 +53,8 @@ prepareBRDataFromOccurrence <- function( con = NULL
     }
   }
 
-  if( class( con ) == "SQLiteConnection" ){
-    flog.warn( "SQLite compatibility not implemented yet, will do all work in memory" )
-    drug_exposure <- drug_exposure %>% collect()
-    condition_occurrence <- condition_occurrence %>% collect()
-    if( !is.null( visit_occurrence ) )
-      visit_occurrence <- visit_occurrence %>% collect()
-  }
-
+  flog.info("Handing over the event table")
+  
   events <- getEventsFromOccurrence(
     drug_exposure = drug_exposure,
     condition_occurrence = condition_occurrence,
@@ -68,8 +62,11 @@ prepareBRDataFromOccurrence <- function( con = NULL
     event = event,
     risk_window = risk_window,
     minimum_duration = minimum_duration )
-
-  flog.info("Handing over the event table")
+  
+  if( class( con ) == "SQLiteConnection" ){
+    flog.warn( "SQLite detected, will do more work in memory" )
+    prepareBRDataFromEvents2( events, event, tying )
+  }
 
   # Return
   prepareBRDataFromEvents( events, event, tying )
