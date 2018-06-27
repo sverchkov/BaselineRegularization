@@ -53,7 +53,7 @@ prepareBRDataFromOccurrence <- function( con = NULL
     }
   }
 
-  flog.info("Handing over the event table")
+  flog.trace("Preparing the event table")
   
   events <- getEventsFromOccurrence(
     drug_exposure = drug_exposure,
@@ -62,6 +62,8 @@ prepareBRDataFromOccurrence <- function( con = NULL
     event = event,
     risk_window = risk_window,
     minimum_duration = minimum_duration )
+
+  flog.trace("Handing over the event table")
   
   if( class( con ) == "SQLiteConnection" ){
     flog.warn( "SQLite detected, will do more work in memory" )
