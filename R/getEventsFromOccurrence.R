@@ -61,17 +61,17 @@ getEventsFromOccurrence <- function( drug_exposure
   # Return value
   union_all( drug_durations %>%
     transmute( person_id, concept_id,
-               event_date = drug_exposure_start_date,
+               event_date = as.Date( drug_exposure_start_date ),
                event_flag = 1L ),
     drug_durations %>%
       transmute( person_id, concept_id,
-                 event_date = drug_exposure_end_date + 1L,
+                 event_date = as.Date( drug_exposure_end_date + 1L ),
                  event_flag = -1L ) ) %>%
     union_all( condition_occurrence %>%
                  inner_join( valid_persons, by = "person_id" ) %>%
                  filter( condition_concept_id == event ) %>%
                  transmute( person_id, concept_id = condition_concept_id,
-                            event_date = condition_start_date,
+                            event_date = as.Date( condition_start_date ),
                             event_flag = 1L ) ) %>%
     inner_join( observation_periods, by = "person_id" ) %>%
     filter( event_date <= observation_period_end_date )
