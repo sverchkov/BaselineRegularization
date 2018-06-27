@@ -10,6 +10,9 @@ getEventsFromOccurrence <- function( drug_exposure
                                    , minimum_duration
                                    )
 {
+  # Ensure correct types
+  minimum_duration = as.integer( minimum_duration )
+  risk_window = as.integer( risk_window )
 
   # Derive observation period per person
   observation_times <-
@@ -37,7 +40,7 @@ getEventsFromOccurrence <- function( drug_exposure
       observation_period_start_date = min( date, na.rm = TRUE ),
       observation_period_end_date = max( date, na.rm = TRUE ) ) %>%
     ungroup() %>%
-    filter( observation_period_end_date - observation_period_start_date > as.integer( minimum_duration ) ) %>%
+    filter( observation_period_end_date - observation_period_start_date > minimum_duration ) %>%
     mutate( obs_period_id = person_id )
 
   valid_persons <- observation_periods %>% select( person_id )
@@ -54,7 +57,7 @@ getEventsFromOccurrence <- function( drug_exposure
 
   if ( risk_window > 0 )
     drug_durations <- drug_durations %>%
-    mutate( drug_exposure_end_date = drug_exposure_end_date + as.integer( risk_window ) )
+    mutate( drug_exposure_end_date = drug_exposure_end_date + risk_window )
 
   # Return value
   union_all( drug_durations %>%
