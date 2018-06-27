@@ -117,6 +117,8 @@ prepareBRDataFromEvents2 <- function ( all_events, event, tying ){
                 # Sort by intervals
                 z_elements <- ade_intervals %>% union( start_intervals ) %>%
                   arrange( interval_number ) %>%
+                  # Query DB
+                  collect() %>%
                   # Get distance to next break
                   mutate( lead_interval = lead( interval_number ) ) %>%
                   mutate( lead_interval = ifelse( is.na( lead_interval ), number_of_intervals+1L, lead_interval ) ) %>%
