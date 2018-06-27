@@ -65,6 +65,9 @@ prepareBRDataFromOccurrence <- function( con = NULL
 
   flog.trace("Handing over the event table")
 
+  if( "tbl_sql" %in% class( events ) )
+    flog.trace("Event table query:", events %>% explain(), capture = T )
+
   if( "SQLiteConnection" == class( con ) ||
       ( ( "tbl_dbi" %in% class( events ) ) &&
         ( "src_dbi" %in% class( events$src ) ) &&
