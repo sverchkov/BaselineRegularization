@@ -43,8 +43,8 @@ getEventsFromOccurrence <- function( drug_exposure
     filter( observation_period_end_date - observation_period_start_date > minimum_duration ) %>%
     mutate( obs_period_id = person_id )
 
-  valid_persons <- observation_periods %>% select( person_id )
-
+  flog.trace("Computing valid persons list")
+  valid_persons <- observation_periods %>% select( person_id ) %>% compute()
 
   # Drug event window expansion
   drug_durations <- drug_exposure %>%
@@ -57,8 +57,11 @@ getEventsFromOccurrence <- function( drug_exposure
 
   if ( risk_window > 0 )
     drug_durations <- drug_durations %>%
-    mutate( drug_exposure_end_date = drug_exposure_end_date + risk_window ) %>%
-    compute()
+    mutate( drug_exposure_end_date = drug_exposure_end_date + risk_window )
+
+  # Make table in the db since it will be reused
+  flog.trace("Computing intermediate drug durations table")
+  drug_durations <- drug_durations %>% compute()
 
   # Return value
   union_all( drug_durations %>%
