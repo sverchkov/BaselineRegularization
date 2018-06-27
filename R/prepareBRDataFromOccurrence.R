@@ -54,7 +54,7 @@ prepareBRDataFromOccurrence <- function( con = NULL
   }
 
   flog.trace("Preparing the event table")
-  
+
   events <- getEventsFromOccurrence(
     drug_exposure = drug_exposure,
     condition_occurrence = condition_occurrence,
@@ -64,12 +64,15 @@ prepareBRDataFromOccurrence <- function( con = NULL
     minimum_duration = minimum_duration )
 
   flog.trace("Handing over the event table")
-  
+
   if( class( con ) == "SQLiteConnection" ){
     flog.warn( "SQLite detected, will do more work in memory" )
-    prepareBRDataFromEvents2( events, event, tying )
-  }
 
-  # Return
-  prepareBRDataFromEvents( events, event, tying )
+    # Return
+    prepareBRDataFromEvents2( events, event, tying )
+  } else {
+
+    # Return
+    prepareBRDataFromEvents( events, event, tying )
+  }
 }
