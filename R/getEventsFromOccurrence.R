@@ -42,7 +42,7 @@ getEventsFromOccurrence <- function( drug_exposure
     transmute( person_id,
                concept_id = drug_concept_id,
                drug_start_day,
-               drug_end_day = 1L + drug_start_day + if_else( is.na( drug_exposure_end_date ), 0L, drug_exposure_end_date - drug_exposure_start_date )
+               drug_end_day = 1L + drug_start_day + if_else( is.na( drug_exposure_end_date ), 0L, as.integer( drug_exposure_end_date - drug_exposure_start_date ) )
     )
 
   if ( risk_window > 0 )
