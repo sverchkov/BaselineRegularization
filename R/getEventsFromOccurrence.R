@@ -40,6 +40,8 @@ getEventsFromOccurrence <- function( drug_exposure
     mutate( drug_start_day = drug_exposure_start_date - observation_period_start ) %>%
     filter( drug_start_day >= 0, drug_start_day <= observation_period_length ) %>%
     transmute( person_id,
+               obs_period_id,
+               observation_period_length,
                concept_id = drug_concept_id,
                drug_start_day,
                drug_end_day = 1L + drug_start_day + if_else( is.na( drug_exposure_end_date ), 0L, as.integer( drug_exposure_end_date - drug_exposure_start_date ) )
