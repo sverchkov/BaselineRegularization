@@ -37,7 +37,7 @@ getEventsFromOccurrence <- function( drug_exposure
   # Drug event window expansion
   drug_durations <- drug_exposure %>%
     inner_join( observation_periods, by = "person_id" ) %>%
-    mutate( drug_start_day = drug_exposure_start_date - observation_period_start ) %>%
+    mutate( drug_start_day = as.integer( drug_exposure_start_date - observation_period_start ) ) %>%
     filter( drug_start_day >= 0, drug_start_day <= observation_period_length ) %>%
     transmute( person_id,
                obs_period_id,
@@ -71,7 +71,7 @@ getEventsFromOccurrence <- function( drug_exposure
                  observation_period_length ) ) %>%
     union_all( condition_occurrence %>%
                  inner_join( observation_periods, by = "person_id" ) %>%
-                 mutate( event_day = condition_start_date - observation_period_start ) %>%
+                 mutate( event_day = as.integer( condition_start_date - observation_period_start ) ) %>%
                  filter( condition_concept_id == event,
                          event_day >= 0,
                          event_day <= observation_period_length ) %>%
