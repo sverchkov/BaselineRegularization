@@ -38,7 +38,7 @@ inferObservationPeriods <- function ( ...
         event_min = `!!`(rlang::sym(min_cols[1])),
         event_max = `!!`(rlang::sym(max_cols[1])) )
 
-    for ( date_col in date_cols[-1] ){
+    for ( date_col in max_cols[-1] ){
       tab <- tab %>%
         mutate( event_max = ifelse( is.na( event_max ),
                                     `!!`(rlang::sym(date_col)),
@@ -49,8 +49,12 @@ inferObservationPeriods <- function ( ...
                                                            event_max
                                                            )
                                             )
-                                    ),
-                event_min = ifelse( is.na( event_min ),
+                                    ) )
+    }
+
+    for ( date_col in min_cols[-1] ){
+      tab <- tab %>%
+        mutate( event_min = ifelse( is.na( event_min ),
                                     `!!`(rlang::sym(date_col)),
                                     ifelse( is.na( `!!`(rlang::sym(date_col)) ),
                                                    event_min,
@@ -61,6 +65,7 @@ inferObservationPeriods <- function ( ...
                                             )
                 ) )
     }
+
     tab
   }, tables )
 
