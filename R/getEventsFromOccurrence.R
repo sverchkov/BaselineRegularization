@@ -14,33 +14,19 @@ getEventsFromOccurrence <- function( drug_exposure
   minimum_duration = as.integer( minimum_duration )
   risk_window = as.integer( risk_window )
 
-  # Derive observation period per person
-  observation_times <-
-    union_all( drug_exposure %>% select( person_id, date = drug_exposure_start_date ),
-               drug_exposure %>%
-                 filter( !is.na( drug_exposure_end_date ) ) %>%
-                 transmute( person_id, date = drug_exposure_end_date ) ) %>%
-    union_all( condition_occurrence %>% select( person_id, date = condition_start_date ) ) %>%
-    union_all( condition_occurrence %>%
-                 filter( !is.na( condition_end_date ) ) %>%
-                 transmute( person_id, date = condition_end_date ) )
+  # Derive observation periods
+  observation_periods <-
+    if( is.null( visit_occurrence ) )
+      inferObservationPeriods( drug_exposure,
+                               condition_occurrence,
+                               patient_id = "person_id" )
+    else
+      inferObservationPeriods( drug_exposure,
+                               condition_occurrence,
+                               visit_occurrence,
+                               patient_id = "person_id" )
 
-  # If there are visit events for patients, include them for the sake of the timeline
-  if ( !is.null( visit_occurrence ) ){
-    observation_times <- observation_times %>%
-      union_all( visit_occurrence %>% select( person_id, date = visit_start_date ) ) %>%
-      union_all( visit_occurrence %>%
-                   filter( !is.na( visit_end_date ) ) %>%
-                   transmute( person_id, date = visit_end_date ) )
-  }
-
-  observation_periods <- observation_times %>%
-    group_by( person_id ) %>%
-    summarize(
-      observation_period_start_date = min( date, na.rm = TRUE ),
-      observation_period_end_date = max( date, na.rm = TRUE ) ) %>%
-    ungroup() %>%
-    filter( observation_period_end_date - observation_period_start_date > minimum_duration ) %>%
+  observation_periods <- observation_periods %>%
     mutate( obs_period_id = person_id )
 
   flog.trace("Computing valid persons list")

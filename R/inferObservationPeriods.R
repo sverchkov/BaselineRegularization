@@ -29,7 +29,7 @@ inferObservationPeriods <- function ( ...
     tab <- tab %>%
       mutate_at( vars( date_cols ), as.Date ) %>%
       group_by( `!!`( ptid ) ) %>%
-      summarize_at( vars( date_cols ), funs( min, max ), na.rm = TRUE ) %>%
+      summarize_at( vars( date_cols ), funs( min, max, .args = list(  na.rm = TRUE ) ) ) %>%
       ungroup() %>%
       mutate(
         event_min = `!!`(rlang::sym(min_cols[1])),
@@ -39,24 +39,22 @@ inferObservationPeriods <- function ( ...
       tab <- tab %>%
         mutate( event_max = ifelse( is.na( event_max ),
                                     `!!`(rlang::sym(date_col)),
-                                    ifelse( is.na( `!!`(rlang::sym(date_col)),
+                                    ifelse( is.na( `!!`(rlang::sym(date_col)) ),
                                                    event_max,
                                                    ifelse( `!!`(rlang::sym(date_col)) > event_max,
                                                            `!!`(rlang::sym(date_col)),
                                                            event_max
                                                            )
-                                                   )
                                             )
                                     ),
                 event_min = ifelse( is.na( event_min ),
                                     `!!`(rlang::sym(date_col)),
-                                    ifelse( is.na( `!!`(rlang::sym(date_col)),
+                                    ifelse( is.na( `!!`(rlang::sym(date_col)) ),
                                                    event_min,
                                                    ifelse( `!!`(rlang::sym(date_col)) < event_min,
                                                            `!!`(rlang::sym(date_col)),
                                                            event_min
                                                            )
-                                                   )
                                             )
                 ) )
     }
