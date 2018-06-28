@@ -49,7 +49,8 @@ getEventsFromOccurrence <- function( drug_exposure
 
   if ( risk_window > 0 )
     drug_durations <- drug_durations %>%
-    mutate( drug_end_dy = drug_end_day + risk_window )
+      mutate( drug_end_dy = drug_end_day + risk_window )
+
 
   # Make table in the db since it will be reused
   flog.trace("Computing intermediate drug durations table")

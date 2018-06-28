@@ -10,7 +10,7 @@
 #' @import dplyr
 inferObservationPeriods <- function ( ...
                                     , patient_id = "patient_id"
-                                    , time_match = "_date" )
+                                    , time_match = "_date$" )
 {
   tables <- list(...) # Should we consider changing this to rlang::list2 ? Or something else?
 
@@ -22,7 +22,7 @@ inferObservationPeriods <- function ( ...
 
   processed_tables <- Map( function ( tab ) {
     all_cols <- colnames( tab )
-    date_cols <- all_cols[ grep( tolower( time_match ), tolower( all_cols ) ) ]
+    date_cols <- all_cols[ grep( time_match, all_cols, ignore.case = T ) ]
     min_cols <- paste0( date_cols, "_min" )
     max_cols <- paste0( date_cols, "_max" )
 
@@ -30,13 +30,13 @@ inferObservationPeriods <- function ( ...
     flog.trace("Date columns:", date_cols, capture = T)
 
     tab <- tab %>%
-      mutate_at( vars( date_cols ), as.Date ) %>%
+      #mutate_at( vars( date_cols ), as.Date ) %>%
       group_by( `!!`( ptid ) ) %>%
       summarize_at( vars( date_cols ), funs( min, max, .args = list(  na.rm = TRUE ) ) ) %>%
       ungroup() %>%
       mutate(
         event_min = `!!`(rlang::sym(min_cols[1])),
-        event_max = `!!`(rlang::sym(max_cols[1])) )
+        event_max = `!!`(rlang::sym(max_cols[1])) ) %>% compute()
 
     for ( date_col in max_cols[-1] ){
       tab <- tab %>%
@@ -49,7 +49,7 @@ inferObservationPeriods <- function ( ...
                                                            event_max
                                                            )
                                             )
-                                    ) )
+                                    ) ) %>% compute()
     }
 
     for ( date_col in min_cols[-1] ){
@@ -63,7 +63,7 @@ inferObservationPeriods <- function ( ...
                                                            event_min
                                                            )
                                             )
-                ) )
+                ) ) %>% compute()
     }
 
     tab
