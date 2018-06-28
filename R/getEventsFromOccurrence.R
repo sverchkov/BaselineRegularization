@@ -26,28 +26,28 @@ getEventsFromOccurrence <- function( drug_exposure
                                visit_occurrence,
                                patient_id = "person_id" )
 
-  # Be explicit about the columns we expect
+  # Be explicit about the columns we expect, filter observation periods
   observation_periods <- observation_periods %>%
     transmute( obs_period_id = person_id,
                person_id,
-               observation_period_start_date = observation_period_start,
-               observation_period_end_date = observation_period_end )
-
-  flog.trace("Computing valid persons list")
-  valid_persons <- observation_periods %>% select( person_id ) %>% compute()
+               observation_period_start,
+               observation_period_length = observation_period_end - observation_period_start + 1L ) %>%
+    filter( observation_period_length >= minimum_duration )
 
   # Drug event window expansion
   drug_durations <- drug_exposure %>%
-    inner_join( valid_persons, by = "person_id" ) %>%
-    transmute( person_id
-               , concept_id = drug_concept_id
-               , drug_exposure_start_date
-               , drug_exposure_end_date = pmax( drug_exposure_start_date, drug_exposure_end_date, na.rm = T )
+    inner_join( observation_periods, by = "person_id" ) %>%
+    mutate( drug_start_day = drug_exposure_start_date - observation_start ) %>%
+    filter( drug_start_day >= 0, drug_start_day <= observation_period_length ) %>%
+    transmute( person_id,
+               concept_id = drug_concept_id,
+               drug_start_day,
+               drug_end_day = 1L + drug_start_day + if_else( is.na( drug_exposure_end_date ), 0L, drug_exposure_end_date - drug_exposure_start_date )
     )
 
   if ( risk_window > 0 )
     drug_durations <- drug_durations %>%
-    mutate( drug_exposure_end_date = drug_exposure_end_date + risk_window )
+    mutate( drug_end_dy = drug_end_day + risk_window )
 
   # Make table in the db since it will be reused
   flog.trace("Computing intermediate drug durations table")
@@ -57,20 +57,28 @@ getEventsFromOccurrence <- function( drug_exposure
   # Return value
   union_all( drug_durations %>%
     transmute( person_id, concept_id,
-               event_date = drug_exposure_start_date,
-               event_flag = 1L ),
+               event_day = drug_start_day,
+               event_flag = 1L,
+               obs_period_id,
+               observation_period_length ),
     drug_durations %>%
       transmute( person_id, concept_id,
-                 event_date = drug_exposure_end_date + 1L,
-                 event_flag = -1L ) ) %>%
+                 event_day = drug_end_day,
+                 event_flag = -1L,
+                 obs_period_id,
+                 observation_period_length ) ) %>%
     union_all( condition_occurrence %>%
-                 inner_join( valid_persons, by = "person_id" ) %>%
-                 filter( condition_concept_id == event ) %>%
+                 inner_join( observation_periods, by = "person_id" ) %>%
+                 mutate( event_day = condition_start_date - observation_start_date ) %>%
+                 filter( condition_concept_id == event,
+                         event_day >= 0,
+                         event_day <= observation_period_length ) %>%
                  transmute( person_id, concept_id = condition_concept_id,
-                            event_date = condition_start_date,
-                            event_flag = 1L ) ) %>%
-    inner_join( observation_periods, by = "person_id" ) %>%
-    filter( event_date <= observation_period_end_date )
+                            event_day,
+                            event_flag = 1L,
+                            obs_period_id,
+                            observation_period_length ) ) %>%
+    filter( event_day <= observation_period_length )
 
   # Code notes on the above:
   # We add 1 to the end date since the "event" is "no longer being exposed," this also folds in with how we turn this
