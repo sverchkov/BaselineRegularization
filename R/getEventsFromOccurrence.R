@@ -26,8 +26,12 @@ getEventsFromOccurrence <- function( drug_exposure
                                visit_occurrence,
                                patient_id = "person_id" )
 
+  # Be explicit about the columns we expect
   observation_periods <- observation_periods %>%
-    mutate( obs_period_id = person_id )
+    transmute( obs_period_id = person_id,
+               person_id,
+               observation_period_start_date = observation_period_start,
+               observation_period_end_date = observation_period_end )
 
   flog.trace("Computing valid persons list")
   valid_persons <- observation_periods %>% select( person_id ) %>% compute()
