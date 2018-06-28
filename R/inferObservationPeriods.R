@@ -26,6 +26,9 @@ inferObservationPeriods <- function ( ...
     min_cols <- paste0( date_cols, "_min" )
     max_cols <- paste0( date_cols, "_max" )
 
+    flog.trace("Columns:", all_cols, capture = T )
+    flog.trace("Date columns:", date_cols, capture = T)
+
     tab <- tab %>%
       mutate_at( vars( date_cols ), as.Date ) %>%
       group_by( `!!`( ptid ) ) %>%
