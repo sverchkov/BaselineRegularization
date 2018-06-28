@@ -1,6 +1,6 @@
 Package: BaselineRegularization
 Title: Baseline Regularization
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: c(
   person("Yuriy", "Sverchkov", email = "yuriy.sverchkov@wisc.edu", role = c("aut", "cre")),
   person("Charles", "Kwong", email = "zhaobin.kuang@gmail.com", role = "aut" ) )
