@@ -23,50 +23,21 @@ inferObservationPeriods <- function ( ...
   processed_tables <- Map( function ( tab ) {
     all_cols <- colnames( tab )
     date_cols <- all_cols[ grep( time_match, all_cols, ignore.case = T ) ]
-    min_cols <- paste0( date_cols, "_min" )
-    max_cols <- paste0( date_cols, "_max" )
 
     flog.trace("Columns:", all_cols, capture = T )
     flog.trace("Date columns:", date_cols, capture = T)
 
-    tab <- tab %>%
-      #mutate_at( vars( date_cols ), as.Date ) %>%
-      group_by( `!!`( ptid ) ) %>%
-      summarize_at( vars( date_cols ), funs( min, max, .args = list(  na.rm = TRUE ) ) ) %>%
-      ungroup() %>%
-      mutate(
-        event_min = `!!`(rlang::sym(min_cols[1])),
-        event_max = `!!`(rlang::sym(max_cols[1])) ) %>% compute()
+    # Account for the unlikely
+    if( "event_time" %in% date_cols )
+      date_cols <- c( "event_time", date_cols[ -which(date_cols == "event_time") ] )
 
-    for ( date_col in max_cols[-1] ){
-      tab <- tab %>%
-        mutate( event_max = ifelse( is.na( event_max ),
-                                    `!!`(rlang::sym(date_col)),
-                                    ifelse( is.na( `!!`(rlang::sym(date_col)) ),
-                                                   event_max,
-                                                   ifelse( `!!`(rlang::sym(date_col)) > event_max,
-                                                           `!!`(rlang::sym(date_col)),
-                                                           event_max
-                                                           )
-                                            )
-                                    ) ) %>% compute()
+    result <- tab %>% select( `!!`( ptid ), event_time = `!!`(rlang::sym( date_cols[1] )) )
+
+    for ( column in date_cols[-1] ){
+      result <- union_all( result, tab %>% select( `!!`( ptid ), event_time = `!!`(rlang::sym( column )) ) )
     }
 
-    for ( date_col in min_cols[-1] ){
-      tab <- tab %>%
-        mutate( event_min = ifelse( is.na( event_min ),
-                                    `!!`(rlang::sym(date_col)),
-                                    ifelse( is.na( `!!`(rlang::sym(date_col)) ),
-                                                   event_min,
-                                                   ifelse( `!!`(rlang::sym(date_col)) < event_min,
-                                                           `!!`(rlang::sym(date_col)),
-                                                           event_min
-                                                           )
-                                            )
-                ) ) %>% compute()
-    }
-
-    tab
+    result
   }, tables )
 
   result <- processed_tables[[1]]
@@ -75,6 +46,8 @@ inferObservationPeriods <- function ( ...
   }
 
   result %>% group_by( `!!`(ptid) ) %>%
-    summarize( observation_period_start = min( event_min ), observation_period_end = max( event_max ) ) %>%
+    summarize(
+      observation_period_start = min( event_time, na.rm = T ),
+      observation_period_end = max( event_time, na.rm = T ) ) %>%
     ungroup()
 }
