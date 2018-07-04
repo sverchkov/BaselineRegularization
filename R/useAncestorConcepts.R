@@ -8,7 +8,9 @@ useAncestorConcepts <- function ( record_table,
                                   ancestors,
                                   record_table_column = "concept_id",
                                   ancestor_column = "ancestor_concept_id",
-                                  descendant_column = "descendant_concept_id") {
+                                  descendant_column = "descendant_concept_id",
+                                  copy = FALSE )
+{
 
   by_map <- descendant_column
   names( by_map ) <- record_table_column
@@ -18,5 +20,5 @@ useAncestorConcepts <- function ( record_table,
     ancestors %>% distinct(
       `!!`(rlang::sym( descendant_column )),
       `!!`(rlang::sym( ancestor_column )) ),
-    by = by_map )
+    by = by_map, copy = copy )
 }
