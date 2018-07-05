@@ -5,7 +5,7 @@
 #'
 #' @param ... One or more tables
 #' @param patient_id specifies the column that corresponds to the patient ID (each observation period has only one of these)
-#' @param time_match to match to columns that correspond to vent times
+#' @param time_match regular expression to match to columns that correspond to event times
 #' @return a table with three columns: patient_id, observation_period_start, observation_period_end
 #' @import dplyr
 inferObservationPeriods <- function ( ...

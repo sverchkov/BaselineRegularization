@@ -1,4 +1,17 @@
-#' Generate BR data from event table ( internal function )
+#' Generate BR data from event table, (SQLite-friendly internal function)
+#'
+#' Internal function that prepares data for [fitBaselineRegularization] from the output of a `getEventsFrom*` function.
+#' This version specitically written to work with SQLite.
+#'
+#' @param all_events Table of events with columns:
+#' `obs_period_id`,
+#' `event_day`,
+#' `concept_id`,
+#' `event_flag`,
+#' `observation_period_length`.
+#' @param event The event of interest the risk of which to estimate.
+#' @param tying The type of tying to use (`interval` or `occurrence`).
+#' @return Data for [fitBaselineRegularization].
 #'
 #' @author Yuriy Sverchkov
 #' @import dplyr
@@ -6,7 +19,7 @@ prepareBRDataFromEvents2 <- function ( all_events, event, tying ){
 
   # Make sure dates are treated as dates
   all_events <- all_events %>% mutate_at( vars( ends_with( "date" ) ), as.Date )
-  
+
   # Make events for the ends of observation periods
   obs_start_events <- all_events %>%
     select( obs_period_id, event_date = observation_period_start_date, observation_period_end_date ) %>%
@@ -26,7 +39,7 @@ prepareBRDataFromEvents2 <- function ( all_events, event, tying ){
     arrange( obs_period_id, event_date ) %>%
     # Query DB
     collect()
-  
+
   event_times <- event_times %>%
     # Get dense observation period numbering
     mutate( obs_period = dense_rank( obs_period_id ) ) %>%
@@ -121,7 +134,7 @@ prepareBRDataFromEvents2 <- function ( all_events, event, tying ){
                   arrange( interval_number ) %>%
                   # Query DB
                   collect()
-                
+
                 z_elements <- z_elements %>%
                   # Get distance to next break
                   mutate( lead_interval = lead( interval_number ) ) %>%

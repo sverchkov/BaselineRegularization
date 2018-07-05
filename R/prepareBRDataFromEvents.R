@@ -1,5 +1,18 @@
 #' Generate BR data from event table ( internal function )
 #'
+#' Internal function that prepares date for [fitBaselineRegularization] from the output of a `getEventsFrom*` function.
+#' This version uses functions not supported by SQLite.
+#'
+#' @param all_events Table of events with columns:
+#' `obs_period_id`,
+#' `event_day`,
+#' `concept_id`,
+#' `event_flag`,
+#' `observation_period_length`
+#' @param event The event of interest the risk of which to estimate.
+#' @param tying The type of tying to use (`interval` or `occurrence`).
+#' @return Data for [fitBaselineRegularization].
+#'
 #' @author Yuriy Sverchkov
 #' @import dplyr
 prepareBRDataFromEvents <- function ( all_events, event, tying ){

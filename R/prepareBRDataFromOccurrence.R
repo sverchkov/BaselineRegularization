@@ -1,12 +1,13 @@
 #' Create data object for baseline regularization
 #'
 #' Creates the data object for running Baseline Regularization
-#' @param con A DBI Connection to an OMOP CDM database.
-#' @param drug_exposure Either the name of the DRUG_EXPOSURE table in the database specified by `con` or the
+#' @param con A DBI Connection to an OMOP CDM database. If this is absent or NULL, tables must be provided as
+#' dataframe-like R objects.
+#' @param drug_exposure Either the name of the `drug_exposure` table in the database specified by `con` or the
 #' table itself in a dataframe-like R object
-#' @param condition_occurence Either the name of the CONDITION_OCCURENCE table in the database specified by `con` or the
-#' table itself in a dataframe-like R object
-#' @param visit_occurence Either the name of the VISIT_OCCURENCE table in the database specified by `con` or the
+#' @param condition_occurrence Either the name of the `condition_occurrence` table in the database specified by `con`
+#' or the table itself in a dataframe-like R object
+#' @param visit_occurrence Either the name of the `visit_occurrence` table in the database specified by `con` or the
 #' table itself in a dataframe-like R object.
 #' A patient will be considered observed from their first to their last visit.
 #' If this parameter is NULL then the patient will be considered from their first to their last drug exposure and/or
@@ -16,16 +17,14 @@
 #' @param risk_window The number of days right after a drug exposure during which the patient is considered still under
 #' exposure.
 #' @param minimum_duration The number of days a patient must be under observation to be included in the analysis.
-#' @param independent_observation_periods Whether to treat distinct observation periods from one patient as distinct
-#' "patients." Default value and only current accepted value is TRUE.
 #' @return An object containing the matrices X, Z, y
 #' @import futile.logger
 #' @import dplyr
 #' @export
 prepareBRDataFromOccurrence <- function( con = NULL
-                                       , drug_exposure = "DRUG_EXPOSURE"
-                                       , condition_occurrence = "CONDITION_OCCURRENCE"
-                                       , visit_occurrence = "VISIT_OCCURRENCE"
+                                       , drug_exposure = "drug_exposure"
+                                       , condition_occurrence = "condition_occurrence"
+                                       , visit_occurrence = "visit_occurrence"
                                        , event
                                        , tying = "occurrence"
                                        , risk_window = 0
