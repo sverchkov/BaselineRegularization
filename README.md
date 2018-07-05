@@ -41,7 +41,7 @@ Requires R (version to be specified).
 Dependencies
 ------------
 
- * dplyr
+ * dplyr (Version 0.7.5 or greater)
  * glmnet
  * Matrix
  
