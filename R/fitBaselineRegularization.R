@@ -1,6 +1,7 @@
 #' Fit baseline regularization
 #'
 #' Fit Baseline Regularization with the given parameters
+#'
 #' @param parameters parameters object produced by defineBRParameters
 #' @param brData data object produced by prepareBRData
 #' @return An object representing the fit model, consisting of the main effect weights and baseline biases
@@ -9,7 +10,7 @@
 fitBaselineRegularization <- function( brData, parameters = defineBRParameters() ){
 
   # Perhaps temporary catch?
-  if ( parameters$lambda1 != 0 ) stop( paste( "Nonzero lambda1 not yet supported (was", lambda1, ")." ) )
+  if ( parameters$lambda1 != 0 ) stop( paste( "Nonzero lambda1 not yet supported (was", parameters$lambda1, ")." ) )
 
   # Extract the following from brData:
   X = brData$X # Exposure matrix
