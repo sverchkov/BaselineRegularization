@@ -4,8 +4,7 @@ library(Matrix)
 
 events_data <- read.csv(
   system.file("testdata", "events_example.csv", package="BaselineRegularization", mustWork = T),
-  stringsAsFactors = FALSE,
-  colClasses = c("numeric", "numeric", "Date", "numeric", "Date", "Date", "numeric") )
+  stringsAsFactors = FALSE)
 
 expectedX <- Matrix( data = c( 0, 1 # PT 1
                              , 1, 1
