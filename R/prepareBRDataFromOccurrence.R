@@ -35,21 +35,9 @@ prepareBRDataFromOccurrence <- function( con = NULL
   }
 
   if ( !is.null( con ) ){
-
-    if ( isSingleString( drug_exposure ) ){
-      flog.info( "Using drug exposure table '%s' from the database.", drug_exposure )
-      drug_exposure <- getDBTable( con, drug_exposure )
-    }
-
-    if ( isSingleString( condition_occurrence ) ){
-      flog.info( "Using condition occurrence table '%s' from the database.", condition_occurrence )
-      condition_occurrence <- getDBTable( con, condition_occurrence )
-    }
-
-    if ( isSingleString( visit_occurrence ) ){
-      flog.info( "Using visit occurrence table '%s' from the database.", visit_occurrence )
-      visit_occurrence <- getDBTable( con, visit_occurrence )
-    }
+    drug_exposure <- getDBTable( con, drug_exposure, "drug exposure" )
+    condition_occurrence <- getDBTable( con, condition_occurrence, "condition occurrence" )
+    visit_occurrence <- getDBTable( con, visit_occurrence, "visit occurrence" )
   }
 
   flog.trace("Preparing the event table")

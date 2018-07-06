@@ -1,16 +1,25 @@
 #' Get relevant tables from a database
 #'
-#' This is a weapper for dplyr::tbl that adds an explanatory flogger log message if dbplyr is not loaded.
+#' Takes a connection, table or table name, and (optional) label, if the second parameter isn't a table name, it just
+#' returns it, otherwise, announces that it is loading the table from the database and uses [dplyr::tbl] to do that.
+#' Also adds an explanatory message if dbplyr is not loaded.
 #' @param con A DBI Connection obtained with DBI::dbConnect()
 #' @param table The name of the table to extract
 #' @return The table
 #' @import futile.logger
 #' @import dplyr
-getDBTable <- function( con, table ){
+getDBTable <- function( con, table, label = NULL ){
 
-  if( !requireNamespace( "dbplyr", quietly = T ) )
-    flog.error( "Could not find the 'dbplyr' package, loading database tables will likely fail without it." )
+  if ( isSingleString( table ) ){
 
-  # Return
-  ftry( tbl( con, table ) )
+    if( !requireNamespace( "dbplyr", quietly = T ) )
+      flog.error( "Could not find the 'dbplyr' package, loading database tables will likely fail without it." )
+
+    flog.info( "Using %s table '%s' from the database.", label, drug_exposure )
+
+    # Return
+    ftry( tbl( con, table ) )
+
+  } else table
+
 }

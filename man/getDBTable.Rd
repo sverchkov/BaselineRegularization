@@ -4,7 +4,7 @@
 \alias{getDBTable}
 \title{Get relevant tables from a database}
 \usage{
-getDBTable(con, table)
+getDBTable(con, table, label = NULL)
 }
 \arguments{
 \item{con}{A DBI Connection obtained with DBI::dbConnect()}
@@ -15,5 +15,7 @@ getDBTable(con, table)
 The table
 }
 \description{
-This is a weapper for dplyr::tbl that adds an explanatory flogger log message if dbplyr is not loaded.
+Takes a connection, table or table name, and (optional) label, if the second parameter isn't a table name, it just
+returns it, otherwise, announces that it is loading the table from the database and uses [dplyr::tbl] to do that.
+Also adds an explanatory message if dbplyr is not loaded.
 }
