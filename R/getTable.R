@@ -1,14 +1,15 @@
-#' Get relevant tables from a database
+#' Get a table, possibly from a database
 #'
 #' Takes a connection, table or table name, and (optional) label, if the second parameter isn't a table name, it just
-#' returns it, otherwise, announces that it is loading the table from the database and uses [dplyr::tbl] to do that.
+#' returns it, otherwise, announces that it is loading the table from the database and uses [dplyr::tbl()] to do that.
 #' Also adds an explanatory message if dbplyr is not loaded.
-#' @param con A DBI Connection obtained with DBI::dbConnect()
-#' @param table The name of the table to extract
+#' @param con A DBI Connection obtained with [DBI::dbConnect()]
+#' @param table A table or the name of the table to extract
+#' @param label User-friendly name for the table (used in info message)
 #' @return The table
 #' @import futile.logger
 #' @import dplyr
-getDBTable <- function( con, table, label = NULL ){
+getTable <- function( con, table, label = NULL ){
 
   if ( isSingleString( table ) ){
 

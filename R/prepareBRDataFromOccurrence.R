@@ -35,9 +35,9 @@ prepareBRDataFromOccurrence <- function( con = NULL
   }
 
   if ( !is.null( con ) ){
-    drug_exposure <- getDBTable( con, drug_exposure, "drug exposure" )
-    condition_occurrence <- getDBTable( con, condition_occurrence, "condition occurrence" )
-    visit_occurrence <- getDBTable( con, visit_occurrence, "visit occurrence" )
+    drug_exposure <- getTable( con, drug_exposure, "drug exposure" )
+    condition_occurrence <- getTable( con, condition_occurrence, "condition occurrence" )
+    visit_occurrence <- getTable( con, visit_occurrence, "visit occurrence" )
   }
 
   flog.trace("Preparing the event table")
