@@ -1,4 +1,4 @@
-#' Create data object
+#' Create data object based on era tables
 #'
 #' Creates the data object for running Baseline Regularization
 #' @param con A DBI Connection to an OMOP CDM database. If it is provided, the observation_period, drug_era, and
@@ -15,38 +15,33 @@
 #' @param independent_observation_periods Whether to treat distinct observation periods from one patient as distinct
 #' "patients." Default value and only current accepted value is TRUE.
 #' @return An object containing the matrices X, Z, y
-#' # maybe import tidyr
+#'
+#' @author Yuriy Sverchkov
+#'
+#' @import futile.logger
 #' @import dplyr
 #' @export
 prepareBRDataFromEras <- function ( con = NULL
-                          , observation_period = NULL
-                          , drug_era = NULL
-                          , condition_era = NULL
+                          , observation_period = "observation_period"
+                          , drug_era = "drug_era"
+                          , condition_era = "condition_era"
                           , event
                           , tying = "occurence"
                           , risk_window = 0
                           , minimum_duration = 0
                           , independent_observation_periods = TRUE ){
 
-  if ( !( tying %in% c("occurrence", "interval" ) ) ) stop( "Invalid 'tying' parameter supplied." )
+  if ( !( tying %in% c("occurrence", "interval" ) ) )
+    stop( flog.fatal( "Invalid 'tying' parameter supplied (%s).", tying ) )
+
   if ( !is.null( con ) ){
-
-    if ( !is.null( observation_period ) ) warning( "observation_period table will be read from the database")
-    observation_period <- getDBTable( con, "observation_period" )
-
-    if ( !is.null( drug_era ) ) warning( "drug_era table will be read from the database")
-    drug_era <- getDBTable( con, "drug_era" )
-
-    if ( !is.null( condition_era ) ) warning( "condition_era table will be read from the database" )
-    condition_era <- getDBTable( con, "condition_era" )
-
-  } else {
-    if ( is.null( observation_period ) || is.null( drug_era ) || is.null( condition_era ) )
-      stop( "Either a database connection or data tables must be provided." )
+    observation_period <- getTable( con, observation_period, "observation period" )
+    drug_era <- getTable( con, drug_era, "drug era" )
+    condition_era <- getDBTable( con, condition_era, "condition era" )
   }
 
   if ( ! independent_observation_periods )
-    stop( "Current implementation only supports independent observation periods." )
+    stop( flog.fatal( "Current implementation only supports independent observation periods." ) )
   else {
     working_observation_periods <- filter( observation_period, observation_period_end_date - observation_period_start_date >= minimum_duration )
   }
