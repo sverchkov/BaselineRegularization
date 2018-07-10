@@ -16,7 +16,7 @@ getTable <- function( con, table, label = NULL ){
     if( !requireNamespace( "dbplyr", quietly = T ) )
       flog.error( "Could not find the 'dbplyr' package, loading database tables will likely fail without it." )
 
-    flog.info( "Using %s table '%s' from the database.", label, drug_exposure )
+    flog.info( msg = "Using %s table '%s' from the database.", label, table )
 
     # Return
     ftry( tbl( con, table ) )
