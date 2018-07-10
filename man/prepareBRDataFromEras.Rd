@@ -2,23 +2,23 @@
 % Please edit documentation in R/prepareBRDataFromEras.R
 \name{prepareBRDataFromEras}
 \alias{prepareBRDataFromEras}
-\title{Create data object}
+\title{Create data object based on era tables}
 \usage{
-prepareBRDataFromEras(con = NULL, observation_period = NULL,
-  drug_era = NULL, condition_era = NULL, event, tying = "occurence",
-  risk_window = 0, minimum_duration = 0,
+prepareBRDataFromEras(con = NULL, observation_period = "observation_period",
+  drug_era = "drug_era", condition_era = "condition_era", event,
+  tying = "occurence", risk_window = 0, minimum_duration = 0,
   independent_observation_periods = TRUE)
 }
 \arguments{
-\item{con}{A DBI Connection to an OMOP CDM database. If it is provided, the observation_period, drug_era, and
-condition_era tables will be read from the database and the corresponding parameters provided to this function will
-be ignored. If it is not provided, the tables will be read from the parameters.}
+\item{con}{A DBI Connection to an OMOP CDM database used if the OMOP tables are provided as table names.}
 
-\item{observation_period}{A dataframe-like view of the OMOP OBSERVATION_PERIOD table}
+\item{observation_period}{A dataframe-like view or the table name of the OMOP OBSERVATION_PERIOD table}
 
-\item{drug_era}{A dataframe-like view of the OMOP DRUG_ERA table}
+\item{drug_era}{A dataframe-like view or the table name of the OMOP DRUG_ERA table}
 
-\item{condition_era}{A dataframe-like view of the OMOP CONDITION_ERA table}
+\item{condition_era}{A dataframe-like view or the table name of the OMOP CONDITION_ERA table}
+
+\item{event}{The condition_concept_id of the condition of interest}
 
 \item{tying}{Parameter tying mode, "interval", or "occurence" (default)}
 
@@ -29,13 +29,13 @@ exposure.}
 
 \item{independent_observation_periods}{Whether to treat distinct observation periods from one patient as distinct
 "patients." Default value and only current accepted value is TRUE.}
-
-\item{condition}{The condition_concept_id of the condition of interest}
 }
 \value{
 An object containing the matrices X, Z, y
-# maybe import tidyr
 }
 \description{
 Creates the data object for running Baseline Regularization
+}
+\author{
+Yuriy Sverchkov
 }

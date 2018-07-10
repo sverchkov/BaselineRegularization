@@ -1,13 +1,11 @@
 #' Create data object based on era tables
 #'
 #' Creates the data object for running Baseline Regularization
-#' @param con A DBI Connection to an OMOP CDM database. If it is provided, the observation_period, drug_era, and
-#' condition_era tables will be read from the database and the corresponding parameters provided to this function will
-#' be ignored. If it is not provided, the tables will be read from the parameters.
-#' @param observation_period A dataframe-like view of the OMOP OBSERVATION_PERIOD table
-#' @param drug_era A dataframe-like view of the OMOP DRUG_ERA table
-#' @param condition_era A dataframe-like view of the OMOP CONDITION_ERA table
-#' @param condition The condition_concept_id of the condition of interest
+#' @param con A DBI Connection to an OMOP CDM database used if the OMOP tables are provided as table names.
+#' @param observation_period A dataframe-like view or the table name of the OMOP OBSERVATION_PERIOD table
+#' @param drug_era A dataframe-like view or the table name of the OMOP DRUG_ERA table
+#' @param condition_era A dataframe-like view or the table name of the OMOP CONDITION_ERA table
+#' @param event The condition_concept_id of the condition of interest
 #' @param tying Parameter tying mode, "interval", or "occurence" (default)
 #' @param risk_window The number of days right after a drug era during which the patient is considered still under
 #' exposure.
@@ -37,13 +35,15 @@ prepareBRDataFromEras <- function ( con = NULL
   if ( !is.null( con ) ){
     observation_period <- getTable( con, observation_period, "observation period" )
     drug_era <- getTable( con, drug_era, "drug era" )
-    condition_era <- getDBTable( con, condition_era, "condition era" )
+    condition_era <- getTable( con, condition_era, "condition era" )
   }
 
   if ( ! independent_observation_periods )
     stop( flog.fatal( "Current implementation only supports independent observation periods." ) )
   else {
-    working_observation_periods <- filter( observation_period, observation_period_end_date - observation_period_start_date >= minimum_duration )
+    working_observation_periods <- observation_period %>%
+      mutate( observation_period_length = 1L + observation_period_end_date - observation_period_start_date ) %>%
+      filter( observation_period_length >= minimum_duration )
   }
 
   #drug_era_events <- inner_join( working_observation_periods, drug_era, by = c( person_id = "person_id" ) )
@@ -61,15 +61,15 @@ prepareBRDataFromEras <- function ( con = NULL
           , person_id
           , concept_id = drug_concept_id
           , event_date = drug_era_start_date ) %>%
-    mutate( event_flag = as.integer(1) )
+    mutate( event_flag = 1L )
 
   drug_end_events <- working_drug_era %>%
-    mutate( event_date = drug_era_end_date + as.integer(1) ) %>%
+    mutate( event_date = drug_era_end_date + 1L ) %>%
     select( event_era_id = drug_era_id
           , person_id
           , concept_id = drug_concept_id
           , event_date ) %>%
-    mutate( event_flag = as.integer(-1) )
+    mutate( event_flag = -1L )
   # Code notes on the above:
   # We cast 1 to integer when adding to the date because dbplyr converts numerals to decimals by default
   # We add 1 to the end date since the "event" is "no longer being exposed," this also folds in with how we turn this
@@ -84,20 +84,19 @@ prepareBRDataFromEras <- function ( con = NULL
           , person_id
           , concept_id = condition_concept_id
           , event_date = condition_era_start_date ) %>%
-    mutate( event_flag = as.integer(1) )
+    mutate( event_flag = 1L )
 
   # Get events associated with observation periods
   all_events <- # combine events
-    drug_start_events %>% dplyr::union( drug_end_events ) %>% dplyr::union( condition_events ) %>%
+    drug_start_events %>% union_all( drug_end_events ) %>% union_all( condition_events ) %>%
     # join with observation periods
     inner_join( working_observation_periods, by = c( person_id = "person_id" ) ) %>%
+    # Compute days since observation period start
+    mutate( event_day = event_date - observation_period_start_date ) %>%
     # filter to events falling within observation periods
-    filter( event_date >= observation_period_start_date, event_date <= observation_period_end_date ) %>%
-    # get a dense indexing of observation periods (may not be strictly necessary)
-    mutate( obs_period = dense_rank( observation_period_id ) )
-
-  # Bookkeeping: save the observation period mapping
-  obs_id_map <- all_events %>% distinct( observation_period_id, obs_period )
+    filter( event_day >= 0, event_day <= observation_period_length ) %>%
+    # rename column to match input for event table
+    rename( obs_period_id = observation_period_id )
 
   # Return
   prepareBRDataFromEvents( all_events, event, tying )
