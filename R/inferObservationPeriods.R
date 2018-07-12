@@ -4,12 +4,13 @@
 #' that are associated with the patients
 #'
 #' @param ... One or more tables
-#' @param patient_id specifies the column that corresponds to the patient ID (each observation period has only one of these)
+#' @param patient_id specifies the column that corresponds to the patient ID (each observation period has only one of
+#' these), using non-standard evaluation
 #' @param time_match regular expression to match to columns that correspond to event times
 #' @return a table with three columns: patient_id, observation_period_start, observation_period_end
 #' @import dplyr
 inferObservationPeriods <- function ( ...
-                                    , patient_id = "patient_id"
+                                    , patient_id = patient_id
                                     , time_match = "_date$" )
 {
   tables <- list(...) # Should we consider changing this to rlang::list2 ? Or something else?
@@ -18,7 +19,7 @@ inferObservationPeriods <- function ( ...
 
   if ( length( tables ) < 1 ) return ( NULL )
 
-  ptid <- rlang::sym( patient_id )
+  ptid <- rlang::enexpr( patient_id )
 
   processed_tables <- Map( function ( tab ) {
     all_cols <- colnames( tab )

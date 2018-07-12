@@ -4,13 +4,13 @@
 \alias{inferObservationPeriods}
 \title{Construct an observation period table from a set of tables}
 \usage{
-inferObservationPeriods(..., patient_id = "patient_id",
-  time_match = "_date$")
+inferObservationPeriods(..., patient_id = patient_id, time_match = "_date$")
 }
 \arguments{
 \item{...}{One or more tables}
 
-\item{patient_id}{specifies the column that corresponds to the patient ID (each observation period has only one of these)}
+\item{patient_id}{specifies the column that corresponds to the patient ID (each observation period has only one of
+these), using non-standard evaluation}
 
 \item{time_match}{regular expression to match to columns that correspond to event times}
 }

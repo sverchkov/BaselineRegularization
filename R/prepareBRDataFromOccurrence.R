@@ -17,6 +17,9 @@
 #' @param risk_window The number of days right after a drug exposure during which the patient is considered still under
 #' exposure.
 #' @param minimum_duration The number of days a patient must be under observation to be included in the analysis.
+#' @param drug_id The column to use for drug ids (uses non-standard evaluation), drug_concept_id by default.
+#' @param condition_id The column to use for condition ids (uses non-standard evaluation), condition_concept_if by default.
+#' @param person_id The column to use for person ids (uses non-standard evaluation), person_id by default.
 #' @return An object containing the matrices X, Z, y
 #' @import futile.logger
 #' @import dplyr
@@ -28,7 +31,11 @@ prepareBRDataFromOccurrence <- function( con = NULL
                                        , event
                                        , tying = "occurrence"
                                        , risk_window = 0
-                                       , minimum_duration = 0 ){
+                                       , minimum_duration = 0
+                                       , drug_id = drug_concept_id
+                                       , condition_id = condition_concept_id
+                                       , person_id = person_id )
+{
 
   if ( !( tying %in% c("occurrence", "interval" ) ) ) {
     stop( flog.fatal( "Invalid 'tying' parameter (%s) supplied.", tying ) )
@@ -48,7 +55,10 @@ prepareBRDataFromOccurrence <- function( con = NULL
     visit_occurrence = visit_occurrence,
     event = event,
     risk_window = risk_window,
-    minimum_duration = minimum_duration )
+    minimum_duration = minimum_duration,
+    drug_id = !!rlang::enexpr(drug_id),
+    condition_id = !!rlang::enexpr(condition_id),
+    person_id = !!rlang::enexpr(person_id))
 
   flog.trace("Handing over the event table")
 

@@ -4,10 +4,9 @@
 \alias{useAncestorConcepts}
 \title{Use ancestor concepts}
 \usage{
-useAncestorConcepts(record_table, ancestors,
-  record_table_column = "concept_id",
-  ancestor_column = "ancestor_concept_id",
-  descendant_column = "descendant_concept_id", copy = FALSE)
+useAncestorConcepts(record_table, ancestors, record_table_column = concept_id,
+  ancestor_column = ancestor_concept_id,
+  descendant_column = descendant_concept_id, copy = FALSE)
 }
 \arguments{
 \item{record_table}{The table to augment}
@@ -26,6 +25,9 @@ sources}
 \description{
 Use an ancestry table to add a column of ancestor concepts to a record table
 This is basically a wrapper for [dplyr::left_join], but only keeps one column of interest from the ancestry table
+}
+\details{
+This function uses tidy-eval non-standard evaluation for column names.
 }
 \author{
 Yuriy Sverchkov
