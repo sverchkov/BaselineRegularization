@@ -11,9 +11,14 @@
 #' @import dplyr
 getTable <- function( con, table, label = NULL ){
 
+  table_sym_str <-deparse( rlang::enexpr( table ) )
+  flog.trace( "Interpreting %s.", table_sym_str )
+
   if ( isSingleString( table ) ){
+    flog.trace( "%s was determined to be a single string." )
 
     if ( !is.na( con ) && !is.null( con ) && DBI::dbIsValid( con ) ) {
+      flog.trace( "A valid database connection was provided." )
 
       if( !requireNamespace( "dbplyr", quietly = T ) )
         flog.error( "Could not find the 'dbplyr' package, loading database tables will likely fail without it." )
@@ -21,10 +26,15 @@ getTable <- function( con, table, label = NULL ){
       flog.info( msg = "Using %s table '%s' from the database.", label, table )
 
       # Return
-      ftry( tbl( con, table ) )
+      return ( ftry( tbl( con, table ) ) )
 
-    } else NULL
+    } else {
+      flog.trace( "No valid DB connection provided, cannot infer table from %s, returning NULL.", table_sym_str )
+      return ( NULL )
+    }
 
-  } else table
-
+  } else {
+    flog.trace( "%s is not a single string, hope that means it's a table, returning it as-is." )
+    return ( table )
+  }
 }
