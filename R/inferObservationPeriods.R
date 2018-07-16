@@ -14,6 +14,7 @@ inferObservationPeriods <- function ( ...
                                     , time_match = "_date$" )
 {
   tables <- list(...) # Should we consider changing this to rlang::list2 ? Or something else?
+  tables <- tables[ !is.null( tables ) ]
 
   n <- length( tables )
 
