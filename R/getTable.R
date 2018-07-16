@@ -9,13 +9,12 @@
 #' @return The table
 #' @import futile.logger
 #' @import dplyr
-getTable <- function( con, table, label = NULL ){
+getTable <- function( con, table, label = deparse( rlang::enexpr( table ) ) ){
 
-  table_sym_str <-deparse( rlang::enexpr( table ) )
-  flog.trace( "Interpreting %s.", table_sym_str )
+  flog.trace( "Interpreting %s.", label )
 
   if ( isSingleString( table ) ){
-    flog.trace( "%s was determined to be a single string." )
+    flog.trace( "%s was determined to be a single string.", label )
 
     if ( !is.null( con ) && !is.na( con ) && DBI::dbIsValid( con ) ) {
       flog.trace( "A valid database connection was provided." )
@@ -29,12 +28,12 @@ getTable <- function( con, table, label = NULL ){
       return ( ftry( tbl( con, table ) ) )
 
     } else {
-      flog.trace( "No valid DB connection provided, cannot infer table from %s, returning NULL.", table_sym_str )
+      flog.trace( "No valid DB connection provided, cannot infer table from %s, returning NULL.", label )
       return ( NULL )
     }
 
   } else {
-    flog.trace( "%s is not a single string, hope that means it's a table, returning it as-is." )
+    flog.trace( "%s is not a single string, hope that means it's a table, returning it as-is.", label )
     return ( table )
   }
 }
