@@ -100,7 +100,7 @@ getEventsFromOccurrence <- function( drug_exposure
   if( !lasting_risk )
     events_result <- events_result %>% union_all(
       drug_durations %>%
-        transmute( !!person_id_syn, concept_id,
+        transmute( !!person_id_sym, concept_id,
                    event_day = drug_end_day,
                    event_flag = -1L,
                    obs_period_id,
