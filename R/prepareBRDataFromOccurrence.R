@@ -41,11 +41,9 @@ prepareBRDataFromOccurrence <- function( con = NULL
     stop( flog.fatal( "Invalid 'tying' parameter (%s) supplied.", tying ) )
   }
 
-  if ( !is.null( con ) ){
-    drug_exposure <- getTable( con, drug_exposure, "drug exposure" )
-    condition_occurrence <- getTable( con, condition_occurrence, "condition occurrence" )
-    visit_occurrence <- getTable( con, visit_occurrence, "visit occurrence" )
-  }
+  drug_exposure <- getTable( con, drug_exposure, "drug exposure" )
+  condition_occurrence <- getTable( con, condition_occurrence, "condition occurrence" )
+  visit_occurrence <- getTable( con, visit_occurrence, "visit occurrence" )
 
   flog.trace("Preparing the event table")
 
