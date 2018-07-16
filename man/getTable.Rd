@@ -4,7 +4,7 @@
 \alias{getTable}
 \title{Get a table, possibly from a database}
 \usage{
-getTable(con, table, label = NULL)
+getTable(con, table, label = deparse(rlang::enexpr(table)))
 }
 \arguments{
 \item{con}{A DBI Connection obtained with [DBI::dbConnect()]}
