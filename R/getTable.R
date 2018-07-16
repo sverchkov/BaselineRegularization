@@ -13,13 +13,17 @@ getTable <- function( con, table, label = NULL ){
 
   if ( isSingleString( table ) ){
 
-    if( !requireNamespace( "dbplyr", quietly = T ) )
-      flog.error( "Could not find the 'dbplyr' package, loading database tables will likely fail without it." )
+    if ( !is.na( con ) && !is.null( con ) && DBI::dbIsValid( con ) ) {
 
-    flog.info( msg = "Using %s table '%s' from the database.", label, table )
+      if( !requireNamespace( "dbplyr", quietly = T ) )
+        flog.error( "Could not find the 'dbplyr' package, loading database tables will likely fail without it." )
 
-    # Return
-    ftry( tbl( con, table ) )
+      flog.info( msg = "Using %s table '%s' from the database.", label, table )
+
+      # Return
+      ftry( tbl( con, table ) )
+
+    } else NULL
 
   } else table
 
