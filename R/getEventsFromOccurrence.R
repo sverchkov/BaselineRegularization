@@ -41,6 +41,8 @@ getEventsFromOccurrence <- function( drug_exposure
   lasting_risk <- Inf == risk_window
   if ( !lasting_risk ) risk_window <- as.integer( risk_window )
 
+  flog.trace( "Class of visit_occurrence is %s.", class( visit_occurrence) )
+
   # Derive observation periods
   observation_periods <-
     if( is.null( visit_occurrence ) )
