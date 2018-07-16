@@ -17,7 +17,7 @@ getTable <- function( con, table, label = NULL ){
   if ( isSingleString( table ) ){
     flog.trace( "%s was determined to be a single string." )
 
-    if ( !is.na( con ) && !is.null( con ) && DBI::dbIsValid( con ) ) {
+    if ( !is.null( con ) && !is.na( con ) && DBI::dbIsValid( con ) ) {
       flog.trace( "A valid database connection was provided." )
 
       if( !requireNamespace( "dbplyr", quietly = T ) )
