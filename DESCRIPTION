@@ -9,6 +9,17 @@ Depends: R (>= 3.0.0)
 License: file LICENSE
 Encoding: UTF-8
 LazyData: true
-Imports: rlang, Matrix, dplyr, tidyr, glmnet, futile.logger
-Suggests: testthat, DBI, dbplyr, RPostgreSQL, RSQLite
+Imports:
+  rlang (>= 0.2),
+  Matrix (>= 1.2),
+  dplyr (>= 0.7),
+  tidyr (>= 0.8),
+  glmnet (>= 2.0),
+  futile.logger (>= 1.4)
+Suggests:
+  testthat (>= 2.0.0),
+  DBI (>= 1.0.0),
+  dbplyr (>= 1.2),
+  RPostgreSQL (>= 0.6),
+  RSQLite (>= 2.1)
 RoxygenNote: 6.0.1
