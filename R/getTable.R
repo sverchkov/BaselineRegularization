@@ -16,7 +16,7 @@ getTable <- function( con, table, label = deparse( rlang::enexpr( table ) ) ){
   if ( isSingleString( table ) ){
     flog.trace( "%s was determined to be a single string.", label )
 
-    if ( !is.null( con ) ) if ( !is.na( con ) ) {
+    if ( !is.null( con ) ) {
       flog.trace( "A database connection was provided." )
 
       if( !requireNamespace( "dbplyr", quietly = T ) )
