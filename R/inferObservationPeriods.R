@@ -33,7 +33,7 @@ inferObservationPeriods <- function ( ...
     if( "event_time" %in% date_cols )
       date_cols <- c( "event_time", date_cols[ -which(date_cols == "event_time") ] )
 
-    result <- tab %>% select( `!!`( ptid ), event_time = `!!`(rlang::sym( date_cols[1] )) )
+    result <- tab %>% select( `!!`( ptid ), event_time = `!!`(as.symbol( date_cols[1] )) )
 
     for ( column in date_cols[-1] ){
       result <- union_all( result, tab %>% select( `!!`( ptid ), event_time = `!!`(rlang::sym( column )) ) )
@@ -49,7 +49,7 @@ inferObservationPeriods <- function ( ...
 
   result %>% group_by( `!!`(ptid) ) %>%
     summarize(
-      observation_period_start = min( event_time, na.rm = T ),
-      observation_period_end = max( event_time, na.rm = T ) ) %>%
+      observation_period_start_date = min( event_time, na.rm = T ),
+      observation_period_end_date = max( event_time, na.rm = T ) ) %>%
     ungroup()
 }

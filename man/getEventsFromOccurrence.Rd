@@ -4,28 +4,28 @@
 \alias{getEventsFromOccurrence}
 \title{Make events table from occurrence information (internal function)}
 \usage{
-getEventsFromOccurrence(drug_exposure, condition_occurrence, visit_occurrence,
-  event, risk_window, minimum_duration, drug_id, condition_id, person_id)
+getEventsFromOccurrence(drug_exposure, condition_occurrence,
+  observation_periods, event, risk_window, drug_sym, condition_sym, person_sym)
 }
 \arguments{
-\item{drug_exposure}{A dataframs-like object correspondint to the OMOP CDM `drug_exposure` table}
+\item{drug_exposure}{A dataframe-like object corresponding to the OMOP CDM `drug_exposure` table}
 
-\item{condition_occurrence}{A dataframs-like object correspondint to the OMOP CDM `condition_occurrence` table}
-
-\item{visit_occurrence}{A dataframs-like object correspondint to the OMOP CDM `visit_occurrence` table}
+\item{condition_occurrence}{A dataframe-like object corresponding to the OMOP CDM `condition_occurrence` table}
 
 \item{event}{The event of interest}
 
 \item{risk_window}{See note on drug exposure duration calculation}
 
+\item{drug_sym}{A [name] representing the column to use for drug ids, drug_concept_id by default.}
+
+\item{condition_sym}{A [name] representing the column to use for condition ids, condition_concept_id by default.}
+
+\item{person_sym}{A [name] representing the column to use for person ids, person_id by default.}
+
+\item{observation_period}{A dataframe-like object corresponding to the OMOP CDM `observation_period` table}
+
 \item{minimum_duration}{The minimum duration that a patient needs to be under observation to be included in the
 analysis.}
-
-\item{drug_id}{The column to use for drug ids (uses non-standard evaluation), drug_concept_id by default.}
-
-\item{condition_id}{The column to use for condition ids (uses non-standard evaluation), condition_concept_if by default.}
-
-\item{person_id}{The column to use for person ids (uses non-standard evaluation), person_id by default.}
 }
 \description{
 Make events table for [prepareBRDataFromEvents] from occurrence tables (rather than era tables).

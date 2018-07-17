@@ -7,8 +7,8 @@
 prepareBRDataFromOccurrence(con = NULL, drug_exposure = "drug_exposure",
   condition_occurrence = "condition_occurrence",
   visit_occurrence = "visit_occurrence", event, tying = "occurrence",
-  risk_window = 0, minimum_duration = 0, drug_id = drug_concept_id,
-  condition_id = condition_concept_id, person_id = person_id)
+  risk_window = 0, minimum_duration = 0, drug_id = `!!`(drug_sym),
+  condition_id = `!!`(condition_sym), person_id = `!!`(person_sym))
 }
 \arguments{
 \item{con}{A DBI Connection to an OMOP CDM database. If this is absent or NULL, tables must be provided as
@@ -37,7 +37,7 @@ exposure.}
 
 \item{drug_id}{The column to use for drug ids (uses non-standard evaluation), drug_concept_id by default.}
 
-\item{condition_id}{The column to use for condition ids (uses non-standard evaluation), condition_concept_if by default.}
+\item{condition_id}{The column to use for condition ids (uses non-standard evaluation), condition_concept_id by default.}
 
 \item{person_id}{The column to use for person ids (uses non-standard evaluation), person_id by default.}
 }

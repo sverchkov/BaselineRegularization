@@ -18,11 +18,12 @@
 #' exposure.
 #' @param minimum_duration The number of days a patient must be under observation to be included in the analysis.
 #' @param drug_id The column to use for drug ids (uses non-standard evaluation), drug_concept_id by default.
-#' @param condition_id The column to use for condition ids (uses non-standard evaluation), condition_concept_if by default.
+#' @param condition_id The column to use for condition ids (uses non-standard evaluation), condition_concept_id by default.
 #' @param person_id The column to use for person ids (uses non-standard evaluation), person_id by default.
 #' @return An object containing the matrices X, Z, y
 #' @import futile.logger
 #' @import dplyr
+#' @import rlang
 #' @export
 prepareBRDataFromOccurrence <- function( con = NULL
                                        , drug_exposure = "drug_exposure"
@@ -32,10 +33,13 @@ prepareBRDataFromOccurrence <- function( con = NULL
                                        , tying = "occurrence"
                                        , risk_window = 0
                                        , minimum_duration = 0
-                                       , drug_id = drug_concept_id
-                                       , condition_id = condition_concept_id
-                                       , person_id = person_id )
+                                       , drug_id = `!!`(drug_sym)
+                                       , condition_id = `!!`(condition_sym)
+                                       , person_id = `!!`(person_sym) )
 {
+  drug_sym <- enexpr( drug_id )
+  condition_sym <- enexpr( condition_id )
+  person_sym <- enexpr( person_id )
 
   if ( !( tying %in% c("occurrence", "interval" ) ) ) {
     stop( flog.fatal( "Invalid 'tying' parameter (%s) supplied.", tying ) )
@@ -45,18 +49,36 @@ prepareBRDataFromOccurrence <- function( con = NULL
   condition_occurrence <- getTable( con, condition_occurrence, "condition occurrence" )
   visit_occurrence <- getTable( con, visit_occurrence, "visit occurrence" )
 
+  # Derive observation periods
+  flog.trace("Inferring observation periods")
+  observation_periods <- inferObservationPeriods( drug_exposure,
+                             condition_occurrence,
+                             visit_occurrence,
+                             patient_id = !!person_sym )
+
+  # Ensure correct types
+  minimum_duration <- as.integer( minimum_duration )
+
+  # Be explicit about the columns we expect, filter observation periods
+  observation_periods <- observation_periods %>%
+    transmute( observation_period_id = !!person_sym,
+               person_id = !!person_sym,
+               observation_period_start_date,
+               observation_period_length = !!observation_period_end_date_sym - !!observation_period_start_date_sym + 1L ) %>%
+    filter( observation_period_length >= minimum_duration )
+
+  # Set up event table
   flog.trace("Preparing the event table")
 
   events <- getEventsFromOccurrence(
     drug_exposure = drug_exposure,
     condition_occurrence = condition_occurrence,
-    visit_occurrence = visit_occurrence,
+    observation_periods = observation_periods,
     event = event,
     risk_window = risk_window,
-    minimum_duration = minimum_duration,
-    drug_id = !!rlang::enexpr(drug_id),
-    condition_id = !!rlang::enexpr(condition_id),
-    person_id = !!rlang::enexpr(person_id))
+    drug_sym = drug_sym,
+    condition_sym = condition_sym,
+    person_sym = person_sym)
 
   flog.trace("Handing over the event table")
 
@@ -67,10 +89,10 @@ prepareBRDataFromOccurrence <- function( con = NULL
       ( ( "tbl_dbi" %in% class( events ) ) &&
         ( "src_dbi" %in% class( events$src ) ) &&
         ( "SQLiteConnection" == class( events$src$con ) ) ) ){
-    flog.warn( "SQLite detected, will do more work in memory" )
+    flog.warn( "SQLite detected, using alternate implementation." )
 
     # Return
-    prepareBRDataFromEvents2( events, event, tying )
+    prepareBRDataFromEventsDBI( events, event, tying )
   } else {
 
     # Return

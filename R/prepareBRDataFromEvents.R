@@ -17,7 +17,7 @@
 #' @import dplyr
 prepareBRDataFromEvents <- function ( all_events, event, tying ){
 
-  all_events <- all_events %>% mutate( obs_period = dense_rank( obs_period_id ) )
+  all_events <- all_events %>% mutate( obs_period = dense_rank( !!observation_period_sym ) )
 
   # Make events for the ends of observation periods
   obs_start_events <- all_events %>%
