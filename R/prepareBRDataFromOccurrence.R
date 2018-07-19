@@ -12,7 +12,7 @@
 #' A patient will be considered observed from their first to their last visit.
 #' If this parameter is NULL then the patient will be considered from their first to their last drug exposure and/or
 #' condition occurence
-#' @param event The condition_concept_id of the event of interest
+#' @param response_event The condition_concept_id of the event of interest
 #' @param tying Parameter tying mode, "interval", or "occurence" (default)
 #' @param risk_window The number of days right after a drug exposure during which the patient is considered still under
 #' exposure.
@@ -29,7 +29,7 @@ prepareBRDataFromOccurrence <- function( con = NULL
                                        , drug_exposure = "drug_exposure"
                                        , condition_occurrence = "condition_occurrence"
                                        , visit_occurrence = "visit_occurrence"
-                                       , event
+                                       , response_event
                                        , tying = "occurrence"
                                        , risk_window = 0
                                        , minimum_duration = 0
@@ -37,6 +37,59 @@ prepareBRDataFromOccurrence <- function( con = NULL
                                        , condition_id = `!!`(condition_sym)
                                        , person_id = `!!`(person_sym) )
 {
+  # Get symbols
+  drug_sym <- enexpr( drug_id )
+  condition_sym <- enexpr( condition_id )
+  person_sym <- enexpr( person_id )
+
+  # Input validation
+  if ( !( tying %in% c("occurrence", "interval" ) ) ) {
+    stop( flog.fatal( "Invalid 'tying' parameter (%s) supplied.", tying ) )
+  }
+
+  # Get tables
+  drug_exposure <- getTable( con, drug_exposure, "drug exposure" )
+  condition_occurrence <- getTable( con, condition_occurrence, "condition occurrence" )
+  visit_occurrence <- getTable( con, visit_occurrence, "visit occurrence" )
+
+  # Infer observation periods
+  flog.trace("Inferring observation periods")
+  observation_period <- inferObservationPeriods( drug_exposure,
+                                                  condition_occurrence,
+                                                  visit_occurrence,
+                                                  patient_id = !!person_sym )
+
+  # Ensure correct type
+  minimum_duration <- as.integer( minimum_duration )
+
+  # TODO: DB Check
+
+  # Be explicit about the columns we expect, filter observation periods
+  observation_period <- observation_period %>%
+    transmute( observation_period_id = !!person_sym,
+               person_id = !!person_sym,
+               observation_period_start_date,
+               observation_period_length = !!observation_period_end_date_sym - !!observation_period_start_date_sym + 1L ) %>%
+    filter( observation_period_length >= minimum_duration ) %>%
+    compute() # We'll be reusing this so it's better to have a computed table
+
+  # Derive drug durations (without risk window, possibly overlapping)
+  drug_duration <- getDrugDurations( drug_exposure, observation_period )
+
+  # Get drug events
+  drug_events <- getDrugEvents( drug_duration, risk_window )
+
+  # Derive condition occurrence days
+  condition_events <- getConditionEvents( condition_occurrence, observation_period )
+
+  # Derive events
+  events_table <- union_all( drug_events, filter( condition_events, concept_id == response_event ) )
+
+  # Prepare data
+  prepareBRDataFromEvents( events )
+}
+
+oldPrepareBRDataFromOccurrence <- function (...) {
   drug_sym <- enexpr( drug_id )
   condition_sym <- enexpr( condition_id )
   person_sym <- enexpr( person_id )
@@ -69,6 +122,21 @@ prepareBRDataFromOccurrence <- function( con = NULL
 
   # Set up event table
   flog.trace("Preparing the event table")
+
+  events <- union_all(
+    drugEventsFromExposure(
+      drug_exposure = drug_exposure,
+      observation_period = observation_periods,
+      risk_window = risk_window,
+      person_sym = person_sym,
+      drug_sym = drug_sym ),
+    conditionEventsFromOccurrence(
+      condition_occurrence,
+      observation_periods,
+      event = event,
+      person_sym = person_sym,
+      condition_sym = condition_sym )
+    )
 
   events <- getEventsFromOccurrence(
     drug_exposure = drug_exposure,
