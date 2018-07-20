@@ -3,13 +3,14 @@
 #' Drug exposure durations are calculated as: exposure end date - exposure start date (if end date is specified) or
 #' according to `days_supply` (if specified) or 1 day if neither is specified.
 #'
-#' @param drug_exposure A dataframe-like object corresponding to the OMOP CDM `drug_exposure` table
+#' @param drug_exposure A dataframe-like object corresponding to the OMOP CDM `drug_exposure` table, particularly, we use
+#' the columns `person_id`, `drug_concept_id`, `drug_exposure_start_date`, `drug_exposure_end_date`, and `days_supply`
 #' @param observation_period A dataframe-like object corresponding to the OMOP CDM `observation_period` table
 #'
 #' @author Yuriy Sverchkov
 #' @importFrom rlang .data
 #' @import dplyr
-#' #no need to import futile.logger
+#' @import futile.logger
 getDrugDurationsFromExposure <- function ( drug_exposure, observation_period )
 {
   # Result
