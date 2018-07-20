@@ -85,7 +85,8 @@ prepareBRDataFromOccurrence <- function( con = NULL
                               person_id = !!person_sym,
                               drug_concept_id = !!drug_sym,
                               drug_exposure_start_date,
-                              drug_exposure_end_date )
+                              drug_exposure_end_date,
+                              days_supply )
 
   # Derive drug durations (without risk window, possibly overlapping)
   drug_duration <- getDrugDurationsFromExposure( drug_exposure, observation_period )
