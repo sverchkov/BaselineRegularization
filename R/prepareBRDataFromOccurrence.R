@@ -59,9 +59,6 @@ prepareBRDataFromOccurrence <- function( con = NULL
                                                   visit_occurrence,
                                                   patient_id = !!person_sym )
 
-  # Ensure correct type
-  minimum_duration <- as.integer( minimum_duration )
-
   # Check DBs
   for ( the_table in list( drug_exposure, condition_occurrence, observation_period ) ){
     if( "SQLiteConnection" == class( con ) ||
@@ -72,20 +69,36 @@ prepareBRDataFromOccurrence <- function( con = NULL
     }
   }
 
+  # Ensure correct type
+  minimum_duration <- as.integer( minimum_duration )
+
   # Be explicit about the columns we expect, filter observation periods
   observation_period <- observation_period %>%
     transmute( observation_period_id = !!person_sym,
                person_id = !!person_sym,
                observation_period_start_date,
-               observation_period_length = !!observation_period_end_date_sym - !!observation_period_start_date_sym + 1L ) %>%
+               observation_period_length = observation_period_end_date - observation_period_start_date + 1L ) %>%
     filter( observation_period_length >= minimum_duration ) %>%
     compute() # We'll be reusing this so it's better to have a computed table
+
+  # Ensure expected columns in drug_exposure
+  drug_exposure <- transmute( drug_exposure,
+                              person_id = !!person_sym,
+                              drug_concept_id = !!drug_sym,
+                              drug_exposure_start_date,
+                              drug_exposure_end_date )
 
   # Derive drug durations (without risk window, possibly overlapping)
   drug_duration <- getDrugDurationsFromExposure( drug_exposure, observation_period )
 
   # Get drug events
   drug_events <- getDrugEvents( drug_duration, risk_window )
+
+  # Ensure expected columns in condition_occurrence
+  condition_occurrence <- transmute( condition_occurrence,
+                                     person_id = !!person_sym,
+                                     condition_concept_id = !!condition_sym,
+                                     condition_start_date )
 
   # Derive condition occurrence days
   condition_events <- getConditionEvents( condition_occurrence, observation_period )
