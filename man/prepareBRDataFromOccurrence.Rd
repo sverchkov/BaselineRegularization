@@ -6,9 +6,10 @@
 \usage{
 prepareBRDataFromOccurrence(con = NULL, drug_exposure = "drug_exposure",
   condition_occurrence = "condition_occurrence",
-  visit_occurrence = "visit_occurrence", event, tying = "occurrence",
-  risk_window = 0, minimum_duration = 0, drug_id = `!!`(drug_sym),
-  condition_id = `!!`(condition_sym), person_id = `!!`(person_sym))
+  visit_occurrence = "visit_occurrence", response_event,
+  tying = "occurrence", risk_window = 0, minimum_duration = 0,
+  drug_id = `!!`(drug_sym), condition_id = `!!`(condition_sym),
+  person_id = `!!`(person_sym))
 }
 \arguments{
 \item{con}{A DBI Connection to an OMOP CDM database. If this is absent or NULL, tables must be provided as
@@ -20,13 +21,12 @@ table itself in a dataframe-like R object}
 \item{condition_occurrence}{Either the name of the `condition_occurrence` table in the database specified by `con`
 or the table itself in a dataframe-like R object}
 
-\item{visit_occurrence}{Either the name of the `visit_occurrence` table in the database specified by `con` or the
+\item{visit_occurrence}{(optional) Either the name of the `visit_occurrence` table in the database specified by `con` or the
 table itself in a dataframe-like R object.
-A patient will be considered observed from their first to their last visit.
-If this parameter is NULL then the patient will be considered from their first to their last drug exposure and/or
+A patient will be considered observed from their first to their last visit, drug exposure and/or
 condition occurence}
 
-\item{event}{The condition_concept_id of the event of interest}
+\item{response_event}{The condition_concept_id of the event of interest}
 
 \item{tying}{Parameter tying mode, "interval", or "occurence" (default)}
 

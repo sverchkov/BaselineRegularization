@@ -7,10 +7,9 @@
 #' table itself in a dataframe-like R object
 #' @param condition_occurrence Either the name of the `condition_occurrence` table in the database specified by `con`
 #' or the table itself in a dataframe-like R object
-#' @param visit_occurrence Either the name of the `visit_occurrence` table in the database specified by `con` or the
+#' @param visit_occurrence (optional) Either the name of the `visit_occurrence` table in the database specified by `con` or the
 #' table itself in a dataframe-like R object.
-#' A patient will be considered observed from their first to their last visit.
-#' If this parameter is NULL then the patient will be considered from their first to their last drug exposure and/or
+#' A patient will be considered observed from their first to their last visit, drug exposure and/or
 #' condition occurence
 #' @param response_event The condition_concept_id of the event of interest
 #' @param tying Parameter tying mode, "interval", or "occurence" (default)
