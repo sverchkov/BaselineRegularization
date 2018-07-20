@@ -62,7 +62,15 @@ prepareBRDataFromOccurrence <- function( con = NULL
   # Ensure correct type
   minimum_duration <- as.integer( minimum_duration )
 
-  # TODO: DB Check
+  # Check DBs
+  for ( the_table in list( drug_exposure, condition_occurrence, observation_period ) ){
+    if( "SQLiteConnection" == class( con ) ||
+        ( ( "tbl_dbi" %in% class( the_table ) ) &&
+          ( "src_dbi" %in% class( the_table$src ) ) &&
+          ( "SQLiteConnection" == class( the_table$src$con ) ) ) ){
+      flog.fatal( "SQLite detected, things will probably go badly." )
+    }
+  }
 
   # Be explicit about the columns we expect, filter observation periods
   observation_period <- observation_period %>%
@@ -74,7 +82,7 @@ prepareBRDataFromOccurrence <- function( con = NULL
     compute() # We'll be reusing this so it's better to have a computed table
 
   # Derive drug durations (without risk window, possibly overlapping)
-  drug_duration <- getDrugDurations( drug_exposure, observation_period )
+  drug_duration <- getDrugDurationsFromExposure( drug_exposure, observation_period )
 
   # Get drug events
   drug_events <- getDrugEvents( drug_duration, risk_window )
@@ -86,84 +94,5 @@ prepareBRDataFromOccurrence <- function( con = NULL
   events_table <- union_all( drug_events, filter( condition_events, concept_id == response_event ) )
 
   # Prepare data
-  prepareBRDataFromEvents( events )
-}
-
-oldPrepareBRDataFromOccurrence <- function (...) {
-  drug_sym <- enexpr( drug_id )
-  condition_sym <- enexpr( condition_id )
-  person_sym <- enexpr( person_id )
-
-  if ( !( tying %in% c("occurrence", "interval" ) ) ) {
-    stop( flog.fatal( "Invalid 'tying' parameter (%s) supplied.", tying ) )
-  }
-
-  drug_exposure <- getTable( con, drug_exposure, "drug exposure" )
-  condition_occurrence <- getTable( con, condition_occurrence, "condition occurrence" )
-  visit_occurrence <- getTable( con, visit_occurrence, "visit occurrence" )
-
-  # Derive observation periods
-  flog.trace("Inferring observation periods")
-  observation_periods <- inferObservationPeriods( drug_exposure,
-                             condition_occurrence,
-                             visit_occurrence,
-                             patient_id = !!person_sym )
-
-  # Ensure correct types
-  minimum_duration <- as.integer( minimum_duration )
-
-  # Be explicit about the columns we expect, filter observation periods
-  observation_periods <- observation_periods %>%
-    transmute( observation_period_id = !!person_sym,
-               person_id = !!person_sym,
-               observation_period_start_date,
-               observation_period_length = !!observation_period_end_date_sym - !!observation_period_start_date_sym + 1L ) %>%
-    filter( observation_period_length >= minimum_duration )
-
-  # Set up event table
-  flog.trace("Preparing the event table")
-
-  events <- union_all(
-    drugEventsFromExposure(
-      drug_exposure = drug_exposure,
-      observation_period = observation_periods,
-      risk_window = risk_window,
-      person_sym = person_sym,
-      drug_sym = drug_sym ),
-    conditionEventsFromOccurrence(
-      condition_occurrence,
-      observation_periods,
-      event = event,
-      person_sym = person_sym,
-      condition_sym = condition_sym )
-    )
-
-  events <- getEventsFromOccurrence(
-    drug_exposure = drug_exposure,
-    condition_occurrence = condition_occurrence,
-    observation_periods = observation_periods,
-    event = event,
-    risk_window = risk_window,
-    drug_sym = drug_sym,
-    condition_sym = condition_sym,
-    person_sym = person_sym)
-
-  flog.trace("Handing over the event table")
-
-  if( "tbl_sql" %in% class( events ) )
-    flog.trace("Event table query:", events %>% explain(), capture = T )
-
-  if( "SQLiteConnection" == class( con ) ||
-      ( ( "tbl_dbi" %in% class( events ) ) &&
-        ( "src_dbi" %in% class( events$src ) ) &&
-        ( "SQLiteConnection" == class( events$src$con ) ) ) ){
-    flog.warn( "SQLite detected, using alternate implementation." )
-
-    # Return
-    prepareBRDataFromEventsDBI( events, event, tying )
-  } else {
-
-    # Return
-    prepareBRDataFromEvents( events, event, tying )
-  }
+  prepareBRDataFromEvents( events_table, response_event, tying )
 }

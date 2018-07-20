@@ -2,6 +2,7 @@
 #'
 #' Takes a drug durations table, extends
 #'
+#' @import futile.logger
 #' @import dplyr
 #' @importFrom rlang .data
 #' @author Yuriy Sverchkov
@@ -13,12 +14,13 @@ getDrugEvents <- function( drug_durations, risk_window = 0 ) {
   if ( lasting_risk ){ # Lasting risk means we keep only the first drug occurrence
 
     drug_durations %>%
-      group_by( .data$observation_period_id, .data$observation_period_length, .data$concept_id ) %>%
-      summarize( event_day = min( .data$drug_start_day ) ) %>%
+      group_by( observation_period_id, observation_period_length, concept_id ) %>%
+      summarize( event_day = min( drug_start_day ) ) %>%
       ungroup() %>%
       mutate( event_flag = 1L )
 
   } else {
+    flog.fatal("Code for non-lasting risk window (!= Inf) currently broken.")
     # Apply risk window, if needed
     if ( risk_window > 0 ){
 
@@ -32,7 +34,7 @@ getDrugEvents <- function( drug_durations, risk_window = 0 ) {
 
     # Merge overlapping drug durations
     drug_durations <- drug_durations %>%
-      group_by( .data$observation_period, .data$concept_id ) %>%
+      group_by( observation_period_id, concept_id ) %>%
       arrange( )
 
 
@@ -40,21 +42,19 @@ getDrugEvents <- function( drug_durations, risk_window = 0 ) {
     flog.trace("Computing intermediate drug durations table")
     drug_durations <- drug_durations %>% compute()
 
-    events_result <- drug_durations %>%
-      transmute( !!person_sym, concept_id,
+    union_all(
+      drug_durations %>%
+      transmute( concept_id,
                  event_day = drug_start_day,
                  event_flag = 1L,
                  observation_period_id,
-                 observation_period_length )
-
-    if( !lasting_risk )
-      events_result <- events_result %>% union_all(
-        drug_durations %>%
-          transmute( !!person_sym, concept_id,
-                     event_day = drug_end_day,
-                     event_flag = -1L,
-                     observation_period_id,
-                     observation_period_length )
-      )
+                 observation_period_length ),
+      drug_durations %>%
+        transmute( concept_id,
+                   event_day = drug_end_day,
+                   event_flag = -1L,
+                   observation_period_id,
+                   observation_period_length )
+    )
   }
 }
