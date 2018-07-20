@@ -1,6 +1,10 @@
 #' Get drug events from drug durations
 #'
-#' Takes a drug durations table, extends
+#' Takes a drug durations table, extends the durations by risk_window, merges overlapping durations, and retuens a
+#' table of drug start and end events
+#'
+#' @param drug_durations Drug durations table as returned by [getDrugDurationsFromExposure].
+#' @param risk_window Risk window in days to be added to durations, with [Inf] indicating lasting risk.
 #'
 #' @import futile.logger
 #' @import dplyr
@@ -35,23 +39,27 @@ getDrugEvents <- function( drug_durations, risk_window = 0 ) {
     # Merge overlapping drug durations
     drug_durations <- drug_durations %>%
       group_by( observation_period_id, concept_id ) %>%
-      arrange( )
-
-
-    # Make table in the db since it will be reused
-    flog.trace("Computing intermediate drug durations table")
-    drug_durations <- drug_durations %>% compute()
+      arrange( observation_period_id, concept_id, drug_start_day ) %>%
+      mutate( merged_start_day =
+                ifelse( lag( drug_end_day, default = -1L ) > drug_start_day,
+                        lag( merged_start_day ),
+                        drug_start_day )
+              ) %>%
+      group_by( observation_period_id, observation_period_length, concept_id, merged_start_day ) %>%
+      summarize( merged_end_day = max( drug_end_day ) ) %>%
+      ungroup() %>%
+      compute()
 
     union_all(
       drug_durations %>%
       transmute( concept_id,
-                 event_day = drug_start_day,
+                 event_day = merged_start_day,
                  event_flag = 1L,
                  observation_period_id,
                  observation_period_length ),
       drug_durations %>%
         transmute( concept_id,
-                   event_day = drug_end_day,
+                   event_day = merged_end_day,
                    event_flag = -1L,
                    observation_period_id,
                    observation_period_length )
