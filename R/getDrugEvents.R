@@ -24,7 +24,7 @@ getDrugEvents <- function( drug_durations, risk_window = 0 ) {
       mutate( event_flag = 1L )
 
   } else {
-    flog.fatal("Code for non-lasting risk window (!= Inf) currently broken.")
+
     # Apply risk window, if needed
     if ( risk_window > 0 ){
 
@@ -36,19 +36,40 @@ getDrugEvents <- function( drug_durations, risk_window = 0 ) {
         mutate( drug_end_day = drug_end_day + risk_window )
     }
 
-    # Merge overlapping drug durations
-    drug_durations <- drug_durations %>%
-      group_by( observation_period_id, concept_id ) %>%
-      arrange( observation_period_id, concept_id, drug_start_day ) %>%
-      mutate( merged_start_day =
-                ifelse( lag( drug_end_day, default = -1L ) > drug_start_day,
-                        lag( merged_start_day ),
-                        drug_start_day )
-              ) %>%
-      group_by( observation_period_id, observation_period_length, concept_id, merged_start_day ) %>%
-      summarize( merged_end_day = max( drug_end_day ) ) %>%
-      ungroup() %>%
-      compute()
+    # Merge overlapping drug durations, class-dependent implementations:
+    flog.trace("Merging overlapping drug durations.")
+
+    drug_durations <- if ( "tbl_dbi" %in% class( drug_durations ) ){
+      # This implementation works for something full-featured like postgres but will fail with SQLite
+      drug_durations %>%
+        group_by( observation_period_id, concept_id ) %>%
+        arrange( observation_period_id, concept_id, drug_start_day ) %>%
+        mutate( merge_point =
+                  ifelse( lead( drug_start_day, default = -1L ) < drug_end_day,
+                          1L,
+                          0L )
+        ) %>%
+        mutate( merge_group = cumsum( merge_point ) ) %>%
+        group_by( observation_period_id, observation_period_length, concept_id, merge_group ) %>%
+        summarize( merged_start_day = min( drug_start_day ), merged_end_day = max( drug_end_day ) ) %>%
+        ungroup() %>%
+        compute()
+
+    } else {
+      # This implementation is more intuitive to understand, but we should test whether it's faster than the one above
+      # for data frames
+      drug_durations %>%
+        group_by( observation_period_id, concept_id ) %>%
+        arrange( observation_period_id, concept_id, drug_start_day ) %>%
+        mutate( merged_start_day =
+                  ifelse( lag( drug_end_day, default = -1L ) > drug_start_day,
+                          lag( merged_start_day ),
+                          drug_start_day )
+                ) %>%
+        group_by( observation_period_id, observation_period_length, concept_id, merged_start_day ) %>%
+        summarize( merged_end_day = max( drug_end_day ) ) %>%
+        ungroup()
+    }
 
     union_all(
       drug_durations %>%
