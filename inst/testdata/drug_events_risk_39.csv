@@ -1,0 +1,10 @@
+concept_id,event_day,event_flag,observation_period_id,observation_period_length
+1,0,1,1,189
+1,152,-1,1,189
+1,159,1,1,189
+2,3,1,1,189
+2,44,-1,1,189
+2,51,1,1,189
+2,91,-1,1,189
+2,92,1,1,189
+2,159,-1,1,189
