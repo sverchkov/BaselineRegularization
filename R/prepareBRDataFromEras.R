@@ -46,13 +46,13 @@ prepareBRDataFromEras <- function ( con = NULL
 
   # Get drug durations from drug eras
   drug_durations <- inner_join( drug_era, working_observation_periods, by = "person_id" ) %>%
-    filter( drug_era_start_data >= observation_period_start_date, drug_era_end_date < observation_period_end_date ) %>%
+    filter( drug_era_start_date >= observation_period_start_date, drug_era_end_date < observation_period_end_date ) %>%
     transmute( observation_period_id,
                observation_period_length,
                concept_id = drug_concept_id,
-               drug_start_day = as.integer( drug_start_date - observatio_period_start_date ),
-               drug_end_day = as.integer( drug_end_date - observation_period_end_date ) ) %>%
-    mutate( drug_end_date = ifelse( !is.na( drug_end_date ), drug_end_day, drug_start_day ) + 1L )
+               drug_start_day = as.integer( drug_era_start_date - observation_period_start_date ),
+               drug_end_day = as.integer( drug_era_end_date - observation_period_end_date ) ) %>%
+    mutate( drug_end_day = ifelse( !is.na( drug_end_day ), drug_end_day, drug_start_day ) + 1L )
 
   # Get drug events
   drug_events <- getDrugEvents( drug_durations, risk_window )
@@ -64,5 +64,5 @@ prepareBRDataFromEras <- function ( con = NULL
   events_table <- union_all( drug_events, filter( condition_events, concept_id == response_event ) )
 
   # Return
-  prepareBRDataFromEvents( all_events, response_event, tying )
+  prepareBRDataFromEvents( events_table, response_event, tying )
 }
