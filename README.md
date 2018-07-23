@@ -57,8 +57,11 @@ Dependencies
 Getting Started
 ---------------
 
-* Installation
-* Package downloads
+### Installation
+The package can be installed from github with
+```r
+devtools::install_github("sverchkov/BaselineRegularization")
+```
 
 Getting Involved
 ----------------
