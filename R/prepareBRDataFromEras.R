@@ -5,7 +5,7 @@
 #' @param observation_period A dataframe-like view or the table name of the OMOP OBSERVATION_PERIOD table
 #' @param drug_era A dataframe-like view or the table name of the OMOP DRUG_ERA table
 #' @param condition_era A dataframe-like view or the table name of the OMOP CONDITION_ERA table
-#' @param event The condition_concept_id of the condition of interest
+#' @param response_event The condition_concept_id of the condition of interest
 #' @param tying Parameter tying mode, "interval", or "occurence" (default)
 #' @param risk_window The number of days right after a drug era during which the patient is considered still under
 #' exposure.
@@ -23,7 +23,7 @@ prepareBRDataFromEras <- function ( con = NULL
                           , observation_period = "observation_period"
                           , drug_era = "drug_era"
                           , condition_era = "condition_era"
-                          , event
+                          , response_event
                           , tying = "occurence"
                           , risk_window = 0
                           , minimum_duration = 0
@@ -79,7 +79,7 @@ prepareBRDataFromEras <- function ( con = NULL
   # in a mutate statement.
 
   condition_events <- condition_era %>%
-    filter( condition_concept_id == event ) %>%
+    filter( condition_concept_id == response_event ) %>%
     select( event_era_id = condition_era_id
           , person_id
           , concept_id = condition_concept_id
@@ -94,10 +94,8 @@ prepareBRDataFromEras <- function ( con = NULL
     # Compute days since observation period start
     mutate( event_day = event_date - observation_period_start_date ) %>%
     # filter to events falling within observation periods
-    filter( event_day >= 0, event_day <= observation_period_length ) %>%
-    # rename column to match input for event table
-    rename( obs_period_id = observation_period_id )
+    filter( event_day >= 0, event_day <= observation_period_length )
 
   # Return
-  prepareBRDataFromEvents( all_events, event, tying )
+  prepareBRDataFromEvents( all_events, response_event, tying )
 }

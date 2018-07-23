@@ -5,7 +5,7 @@
 \title{Create data object based on era tables}
 \usage{
 prepareBRDataFromEras(con = NULL, observation_period = "observation_period",
-  drug_era = "drug_era", condition_era = "condition_era", event,
+  drug_era = "drug_era", condition_era = "condition_era", response_event,
   tying = "occurence", risk_window = 0, minimum_duration = 0,
   independent_observation_periods = TRUE)
 }
@@ -18,7 +18,7 @@ prepareBRDataFromEras(con = NULL, observation_period = "observation_period",
 
 \item{condition_era}{A dataframe-like view or the table name of the OMOP CONDITION_ERA table}
 
-\item{event}{The condition_concept_id of the condition of interest}
+\item{response_event}{The condition_concept_id of the condition of interest}
 
 \item{tying}{Parameter tying mode, "interval", or "occurence" (default)}
 
