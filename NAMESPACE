@@ -2,6 +2,7 @@
 
 export(defineBRParameters)
 export(fitBaselineRegularization)
+export(getCoefficients)
 export(prepareBRDataFromEras)
 export(prepareBRDataFromOccurrence)
 export(useAncestorConcepts)

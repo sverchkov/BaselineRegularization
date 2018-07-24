@@ -15,6 +15,7 @@
 #' @return Table sorted as specified with columns Beta, concept_id, and (if possible) "Drug Name".
 #'
 #' @import dplyr
+#' @export
 #' @author Yuriy Sverchkov
 getCoefficients <- function ( fit,
                               con = NULL,
