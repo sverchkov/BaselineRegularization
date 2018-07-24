@@ -83,6 +83,9 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
 
   feature_indeces <- feature_indeces %>% collect()
 
+  drug_concept_id <-
+    ( feature_indeces %>% distinct( drug_number, concept_id ) %>% arrange( drug_number ) )$concept_id
+
   drug_vector <- feature_indeces$drug_number
 
   X <- sparseMatrix( i = feature_indeces$interval_number
@@ -127,6 +130,8 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
     Z = Z,
     l = as.numeric( interval_details$interval_length ), # Conversion to numeric from difftime
     n = as.vector( sparseVector( x = 1, i = ade_intervals$interval_number, length = number_of_intervals ) ),
-    patients = interval_details$obs_period
+    patients = interval_details$obs_period,
+    drug_concept_id = drug_concept_id,
+    response_event = event
   )
 }

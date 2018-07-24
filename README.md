@@ -22,7 +22,7 @@ con <- DBI::dbConnect( RPostgreSQL::PostgreSQL()
 event = 4110956 # The concept_id for "Acute myocardial infarction NOS"
 
 # Extract relevant data
-br_data <- prepareBRDataFromOccurrence( con, event )
+br_data <- prepareBRDataFromOccurrence( con, response_event <- event )
 
 # Parametrize task
 parameters <- defineBRParameters()
@@ -30,8 +30,8 @@ parameters <- defineBRParameters()
 # Fit model
 fit <- fitBaselineRegularization( br_data, parameters )
 
-# Print results
-# TODO
+# Show results (beta coefficients)
+getCoefficients( fit )
 
 ```
 
