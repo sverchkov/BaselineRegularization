@@ -89,16 +89,16 @@ getInterval = function(x,era){
 #'
 #' @import Matrix
 #' @import futile.logger
-getAbsErr = function(oldVec,newVec){
-    oldVec = Matrix(oldVec);
-    newVec = Matrix(newVec);
+getAbsErr = function( a, b ){
+    oldVec = Matrix( a );
+    newVec = Matrix( b );
 
     d1 <- dim( oldVec )
     d2 <- dim( newVec )
-    if( d1 != d2 ){
+    if( all( d1 != d2 ) ){
       flog.error( "Trying to compare vectors of different size! (%s and %s)",
-                  deparse( enexpr( oldVec ) ),
-                  deparse( enexpr( newVec ) ) )
+                  deparse( enexpr( a ) ),
+                  deparse( enexpr( b ) ) )
       flog.error( "Dimensions of first argument:", d1, capture = T )
       flog.error( "Dimensions of second argument:", d2, capture = T )
     }
