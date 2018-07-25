@@ -67,7 +67,7 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
       betaOld <- beta
 
       if ( 0 == lam1 ) {
-        beta <- lsfit( x=X, y=brBetaResoponse, wt=brBetaWeights, intercept = FALSE, tolerance = 1e-8 )$coef
+        beta <- lsfit( x=X, y=brBetaResponse, wt=brBetaWeights, intercept = FALSE, tolerance = 1e-8 )$coef
       } else {
         # Note: glmnet doesn't like only getting one lambda, so we give it a sequence and then grab the one we need.
         mdlBeta <- glmnet::glmnet( x=X, y=brBetaResponse, family="gaussian",
