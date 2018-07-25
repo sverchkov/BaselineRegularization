@@ -2,20 +2,26 @@
 #'
 #' Fit Baseline Regularization with the given parameters
 #'
-#' @param parameters parameters object produced by defineBRParameters
-#' @param brData data object produced by prepareBRData
-#' @return An object representing the fit model, consisting of the main effect weights and baseline biases
+#' @param parameters parameters object produced by [defineBRParameters]
+#' @param br_data data object produced by `prepareBRDataFrom*`
+#' @return An object representing the fit model, with elements:
+#' * beta, the model coefficients
+#' * t
+#' * res
+#' * parameters, (the `parameters` passed to this function)
+#' * drug_concept_id, vector of drug concept IDs, for matching back with beta coefficients
 #' @export
 #' @import Matrix
 #' @import futile.logger
-fitBaselineRegularization <- function( brData, parameters = defineBRParameters() ){
+#' @author Zhaobin Kuang
+fitBaselineRegularization <- function( br_data, parameters = defineBRParameters() ){
 
   # Extract the following from brData:
-  X = brData$X # Exposure matrix
-  Z = brData$Z # Interval-to-baseline-parameter design matrix.
-  l = brData$l # Interval durations
-  n = brData$n # # of adverse events in each interval
-  segIndx = brData$patients # For each segment indicates which patient it matches
+  X <- br_data$X # Exposure matrix
+  Z <- br_data$Z # Interval-to-baseline-parameter design matrix.
+  l <- br_data$l # Interval durations
+  n <- br_data$n # # of adverse events in each interval
+  segIndx <- br_data$patients # For each segment indicates which patient it matches
 
   # Determine the number of baseline parameters
   n_t <- ncol(Z)
@@ -133,5 +139,5 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
 
   }
 
-  list( beta = beta, t = t, res=betaRes, parameters = parameters, drug_concept_id = brData$drug_concept_id )
+  list( beta = beta, t = t, res=betaRes, parameters = parameters, drug_concept_id = br_data$drug_concept_id )
 }
