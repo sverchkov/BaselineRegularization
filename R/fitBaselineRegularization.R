@@ -84,7 +84,7 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
       t <- Matrix(t)
 
       # stopping criteria
-      absInner = getAbsErr(rBind(tOld,betaOld),rBind(t,beta));
+      absInner = getAbsErr( rbind(tOld,betaOld), rbind(t,beta) );
 
       if(absOuter>10 & absInner<0.05*absOuter){
         break;
@@ -94,7 +94,7 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
 
     }
 
-    absOuter = getAbsErr(rBind(tOldOld,betaOldOld),rBind(t,beta));
+    absOuter = getAbsErr( rbind(tOldOld,betaOldOld), rbind(t,beta) );
 
     betaErr = as.numeric( t(X)%*%( n - exp( log(l) + (X%*%beta+Z%*%t) ) ) );
     betaRes = sqrt( mean(betaErr^2) );
