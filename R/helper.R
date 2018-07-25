@@ -95,7 +95,7 @@ getAbsErr = function( a, b ){
 
     d1 <- dim( oldVec )
     d2 <- dim( newVec )
-    if( all( d1 != d2 ) ){
+    if( any( d1 != d2 ) ){
       flog.error( "Trying to compare vectors of different size! (%s and %s)",
                   deparse( enexpr( a ) ),
                   deparse( enexpr( b ) ) )
