@@ -1,14 +1,14 @@
 # add clIndx for the purpose of assigning parallel jobs
 addClIndx = function(dt,indx,nCl){
-    
+
     # indx assumed to be sorted
     if(!is.null(dt$clIndx)){dt$clIndx=NULL};
-    
+
     # initialization
     thre = as.matrix(quantile(indx,(0:(nCl))/nCl));
     count = hist(indx, breaks=unique(thre),plot=FALSE)$counts;
     dt$clIndx = rep(1:length(count),times=count);
-    
+
     # output
     return(dt);
 }
@@ -47,29 +47,29 @@ mergeEra = function(x,drugEra,pw){
 getIndx = function(age,interval){
     currInterval = as.data.table(t(matrix(age,nrow=2)));
     setnames(currInterval,c("startAge","endAge"));
-    currInterval$startIndx = 
+    currInterval$startIndx =
         subset(interval,startAge %in% currInterval$startAge)$indx;
-    currInterval$endIndx = 
+    currInterval$endIndx =
         subset(interval,endAge %in% currInterval$endAge)$indx;
     return(unlist(mapply(seq,currInterval$startIndx,currInterval$endIndx)));
 }
 getIntervalSingle = function(startAge,endAge,id){
     # create interval from drug eras
-    
+
     # endPoint
     endPoint = data.table(
-        age = as.numeric(c(startAge,endAge)), 
-        enterLeaveMark = rep(c(FALSE,TRUE),each=length(startAge)), 
+        age = as.numeric(c(startAge,endAge)),
+        enterLeaveMark = rep(c(FALSE,TRUE),each=length(startAge)),
         id = rep(id,2));
     setkey(endPoint,age,enterLeaveMark); setkey(endPoint,NULL);
     age = unique(endPoint$age);
-    
+
     # interval
     interval = data.table(
         startAge = age[-length(age)],endAge = age[-1]);
     interval$indx = 1:nrow(interval);
     setcolorder(interval,c("indx","startAge","endAge"));
-    
+
     # interval-drug indx
     indx = endPoint[,getIndx(age,interval),by="id"];
     setnames(indx,"V1","indx");
@@ -83,21 +83,38 @@ getInterval = function(x,era){
     return(curr);
 }
 
+#' Get absolute error between a pair of vectors/matrices
+#'
+#' Get absolute error between a pair of vectors/matrices
+#'
+#' @import Matrix
+#' @import futile.logger
 getAbsErr = function(oldVec,newVec){
     oldVec = Matrix(oldVec);
     newVec = Matrix(newVec);
+
+    d1 <- dim( oldVec )
+    d2 <- dim( newVec )
+    if( d1 != d2 ){
+      flog.error( "Trying to compare vectors of different size! (%s and %s)",
+                  deparse( enexpr( oldVec ) ),
+                  deparse( enexpr( newVec ) ) )
+      flog.error( "Dimensions of first argument:", d1, capture = T )
+      flog.error( "Dimensions of second argument:", d2, capture = T )
+    }
+
     relErr = norm(oldVec-newVec,type="F");
     return(relErr);
 }
 
 parseConfig = function(x,configBr){
-    
+
     # read
     currConfig = subset(configBr,indx==x);
-    
+
     # dxIdWanted
     dxIdWanted = currConfig$dxId;
-    
+
     # expose
     if(currConfig$expose=="era"){
         expose = "";
@@ -106,7 +123,7 @@ parseConfig = function(x,configBr){
     }else if(currConfig$expose=="rwOneMonth"){
         expose = "RwOneMonth";
     }
-    
+
     # admit
     if(currConfig$admit=="start"){
         admit = "";
@@ -117,8 +134,8 @@ parseConfig = function(x,configBr){
     }else{
         admit = "";
     }
-    
+
     # results
     return(paste("data",expose,admit,dxIdWanted,".RData",sep=""));
-    
+
 }
