@@ -72,7 +72,8 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
       betaOld <- beta
 
       if ( 0 == lam1 ) {
-        beta <- lsfit( x=X, y=brBetaResponse, wt=brBetaWeights, intercept = FALSE, tolerance = 1e-8 )$coef
+        beta_fit <- lsfit( x=X, y=brBetaResponse, wt=brBetaWeights, intercept = FALSE, tolerance = 1e-8 )
+        beta <- Matrix( beta_fit$coefficients )
       } else {
         # Note: glmnet doesn't like only getting one lambda, so we give it a sequence and then grab the one we need.
         mdlBeta <- glmnet::glmnet( x=X, y=brBetaResponse, family="gaussian",
@@ -89,21 +90,17 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
       t <- Matrix(t)
 
       # stopping criteria
-      flogger.trace( "Vector lengths: tOld: %s, betaOld: %s, t: %s, beta: %s",
-                     length( tOld ), length( betaOld ), length( t ), length( beta ) )
-      absInner = getAbsErr( rbind(tOld,betaOld), rbind(t,beta) );
+      absInner <- getAbsErr( rbind( tOld, betaOld ), rbind( t, beta ) );
 
-      if(absOuter>10 & absInner<0.05*absOuter){
+      if ( absOuter > 10 & absInner < 0.05 * absOuter ){
         break;
-      }else if(absInner<max(1e-3*absOuter,thre)){
+      }else if ( absInner < max( 1e-3 * absOuter, thre ) ){
         break;
       }
 
     }
 
-    flogger.trace( "Vector lengths: tOldOld: %s, betaOldOld: %s, t: %s, beta: %s",
-                   length( tOldOld ), length( betaOldOld ), length( t ), length( beta ) )
-    absOuter = getAbsErr( rbind(tOldOld,betaOldOld), rbind(t,beta) );
+    absOuter <- getAbsErr( rbind( tOldOld, betaOldOld ), rbind( t, beta ) );
 
     betaErr = as.numeric( t(X)%*%( n - exp( log(l) + (X%*%beta+Z%*%t) ) ) );
     betaRes = sqrt( mean(betaErr^2) );
