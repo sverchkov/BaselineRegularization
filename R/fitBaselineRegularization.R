@@ -7,6 +7,7 @@
 #' @return An object representing the fit model, consisting of the main effect weights and baseline biases
 #' @export
 #' @import Matrix
+#' @import futile.logger
 fitBaselineRegularization <- function( brData, parameters = defineBRParameters() ){
 
   # Extract the following from brData:
@@ -42,6 +43,8 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
 
   for( outerCounter in 1:parameters$maxOuterLoopIterations ){
 
+    flog.trace( "Outer loop iteration %s", outerCounter )
+
     # eta
     eta = X %*% beta + Z %*% t;
     selector = eta+log(l)<log(1e-5);
@@ -60,6 +63,8 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
 
 
     for( innerCounter in 1:parameters$maxInnerLoopIterations ){
+
+      flog.trace( "Inner loop iteration %s", innerCounter )
 
       # beta step
       brBetaResponse = psi-Z%*%t;
@@ -84,6 +89,8 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
       t <- Matrix(t)
 
       # stopping criteria
+      flogger.trace( "Vector lengths: tOld: %s, betaOld: %s, t: %s, beta: %s",
+                     length( tOld ), length( betaOld ), length( t ), length( beta ) )
       absInner = getAbsErr( rbind(tOld,betaOld), rbind(t,beta) );
 
       if(absOuter>10 & absInner<0.05*absOuter){
@@ -94,6 +101,8 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
 
     }
 
+    flogger.trace( "Vector lengths: tOldOld: %s, betaOldOld: %s, t: %s, beta: %s",
+                   length( tOldOld ), length( betaOldOld ), length( t ), length( beta ) )
     absOuter = getAbsErr( rbind(tOldOld,betaOldOld), rbind(t,beta) );
 
     betaErr = as.numeric( t(X)%*%( n - exp( log(l) + (X%*%beta+Z%*%t) ) ) );
