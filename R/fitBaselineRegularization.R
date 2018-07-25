@@ -9,9 +9,6 @@
 #' @import Matrix
 fitBaselineRegularization <- function( brData, parameters = defineBRParameters() ){
 
-  # Perhaps temporary catch?
-  if ( parameters$lambda1 != 0 ) stop( paste( "Nonzero lambda1 not yet supported (was", parameters$lambda1, ")." ) )
-
   # Extract the following from brData:
   X = brData$X # Exposure matrix
   Z = brData$Z # Interval-to-baseline-parameter design matrix.
@@ -28,7 +25,7 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
   t <- Matrix(-abs(rnorm(n_t)/10)) # Initializes a column vector to -abs( Normal(0,0.1) )
   beta <- Matrix(rep(0,n_beta)) # Column of zeros
 
-  # lam1 <- parameters$lambda1 # Will presumably implement later
+  lam1 <- parameters$lambda1
   lam2 <- parameters$lambda2
   lam3 <- parameters$lambda3
 
@@ -66,12 +63,19 @@ fitBaselineRegularization <- function( brData, parameters = defineBRParameters()
 
       # beta step
       brBetaResponse = psi-Z%*%t;
-      mdlBeta = glmnet::glmnet(x=X, y=brBetaResponse, family="gaussian",
-                       weights = brBetaWeights, alpha=0, lambda=0,
-                       intercept=FALSE, thresh = 1e-8, standardize=FALSE);
-      betaOld = beta;
-      beta = mdlBeta$beta;
-      rm(mdlBeta);
+
+      betaOld <- beta
+
+      if ( 0 == lam1 ) {
+        beta <- lsfit( x=X, y=brBetaResoponse, wt=brBetaWeights, intercept = FALSE, tolerance = 1e-8 )$coef
+      } else {
+        # Note: glmnet doesn't like only getting one lambda, so we give it a sequence and then grab the one we need.
+        mdlBeta <- glmnet::glmnet( x=X, y=brBetaResponse, family="gaussian",
+                                   weights = brBetaWeights, alpha=0, lambda=lam1*c(100,10,1),
+                                   intercept=FALSE, thresh = 1e-8, standardize=FALSE);
+        beta <- mdlBeta$beta[,3];
+        rm(mdlBeta);
+      }
 
       # t step
       tau <- as.numeric(t(Z)%*%(brBetaWeights*(psi-X%*%beta)))/omega
