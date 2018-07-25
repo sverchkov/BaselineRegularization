@@ -34,7 +34,7 @@ getCoefficients <- function ( fit,
   names_table <- getTable( con, names_table )
 
   # Get core result table
-  result <- tibble( Beta = fit$beta, concept_id = fit$drug_concept_id )
+  result <- tibble( Beta = as.vector( fit$beta ), concept_id = fit$drug_concept_id )
 
   if ( !keep_zeros )
     result <- filter( result, Beta != 0 )
