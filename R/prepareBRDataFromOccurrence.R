@@ -52,7 +52,7 @@ prepareBRDataFromOccurrence <- function( con = NULL
   visit_occurrence <- getTable( con, visit_occurrence, "visit occurrence" )
 
   # Infer observation periods
-  flog.trace("Inferring observation periods")
+  flog.debug("Inferring observation periods")
   observation_period <- inferObservationPeriods( drug_exposure,
                                                   condition_occurrence,
                                                   visit_occurrence,
@@ -80,6 +80,8 @@ prepareBRDataFromOccurrence <- function( con = NULL
     filter( observation_period_length >= minimum_duration ) %>%
     compute() # We'll be reusing this so it's better to have a computed table
 
+  flog.debug("Computed observation periods.")
+
   # Ensure expected columns in drug_exposure
   drug_exposure <- transmute( drug_exposure,
                               person_id = !!person_sym,
@@ -95,17 +97,35 @@ prepareBRDataFromOccurrence <- function( con = NULL
   drug_events <- getDrugEvents( drug_duration, risk_window )
 
   # Ensure expected columns in condition_occurrence
-  condition_occurrence <- transmute( condition_occurrence,
-                                     person_id = !!person_sym,
-                                     condition_concept_id = !!condition_sym,
-                                     condition_start_date )
+  condition_occurrence <- select( condition_occurrence,
+                                  person_id = !!person_sym,
+                                  condition_concept_id = !!condition_sym,
+                                  condition_start_date ) %>%
+    filter( condition_concept_id %in% response_event )
 
   # Derive condition occurrence days
   condition_events <- getConditionEvents( condition_occurrence, observation_period )
 
-  # Derive events
-  events_table <- union_all( drug_events, filter( condition_events, concept_id == response_event ) )
+  results <- Map( function( event_id ){
 
-  # Prepare data
-  prepareBRDataFromEvents( events_table, response_event, tying )
+    condition_event_subset <- filter( condition_events, concept_id == event_id )
+    if ( 1 > ( condition_event_subset %>% summarize( count = n() ) %>% head(1) %>% collect() )$count ){
+      flog.warn( "Response event %s doesn't occur in the cohort. Failed to build data for it.", event_id )
+      return ( NULL )
+    }
+
+    # Derive events
+    events_table <- union_all( drug_events, filter( condition_events, concept_id == event_id ) )
+
+    # Prepare data
+    prepareBRDataFromEvents( events_table, event_id, tying )
+
+  }, response_event )
+
+  if ( length( response_event ) > 1 ) {
+    flog.debug( "Got multiple response_event values, will a list of multiple data objects." )
+    return ( results )
+  } else {
+    return ( results[[1]] )
+  }
 }
