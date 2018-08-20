@@ -27,3 +27,6 @@ vignettes/*.pdf
 BaselineRegularization.Rproj
 # Mac
 .DS_Store
+# C/C++ build files
+src/*.o
+src/*.so
