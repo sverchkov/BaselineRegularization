@@ -1,7 +1,7 @@
 BaselineRegularization
 =======================
 
-[![Build Status](https://travis-ci.org/sverchkov/BaselineRegularization.svg?branch=master)](https://travis-ci.org/sverchkov/BaselineRegularization) [![codecov](https://codecov.io/gh/sverchkov/BaselineRegularization/branch/master/graph/badge.svg)](https://codecov.io/gh/sverchkov/BaselineRegularization)
+[![Build Status](https://travis-ci.com/sverchkov/BaselineRegularization.svg?branch=master)](https://travis-ci.com/sverchkov/BaselineRegularization) [![codecov](https://codecov.io/gh/sverchkov/BaselineRegularization/branch/master/graph/badge.svg)](https://codecov.io/gh/sverchkov/BaselineRegularization)
 
 
 Introduction
