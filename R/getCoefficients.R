@@ -20,9 +20,9 @@
 getCoefficients <- function ( fit,
                               con = NULL,
                               names_table = "concept",
-                              id_var = concept_id,
-                              name_var = concept_name,
-                              sort_by = desc( abs( Beta ) ),
+                              id_var = !!(br_symbol$concept_id),
+                              name_var = !!(br_symbol$concept_name),
+                              sort_by = desc( abs( !!(br_symbol$Beta) ) ),
                               keep_zeros = F )
 {
   # Extract NSE symbols
@@ -37,15 +37,15 @@ getCoefficients <- function ( fit,
   result <- tibble( Beta = as.vector( fit$beta ), concept_id = fit$drug_concept_id )
 
   if ( !keep_zeros )
-    result <- filter( result, Beta != 0 )
+    result <- filter( result, !!br_symbol$Beta != 0 )
 
   result <- arrange( result, !!sort_sym )
 
   # Try to join with names
   if ( !is.null( names_table ) )
-    result <- left_join( result, names_table, by = c( concept_id = deparse( concept_sym ) ) )
+    result <- left_join( result, names_table, by = c( concept_id = deparse( id_sym ) ) )
 
   # Result
-  select( result, Beta, concept_id, `Drug Name` = !!name_var )
+  select( result, !!br_symbol$Beta, !!br_symbol$concept_id, `Drug Name` = !!name_var )
 
 }

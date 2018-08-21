@@ -7,11 +7,9 @@
 #'
 #' @param drug_exposure A dataframe-like object corresponding to the OMOP CDM `drug_exposure` table
 #' @param condition_occurrence A dataframe-like object corresponding to the OMOP CDM `condition_occurrence` table
-#' @param observation_period A dataframe-like object corresponding to the OMOP CDM `observation_period` table
+#' @param observation_periods A dataframe-like object corresponding to the OMOP CDM `observation_period` table
 #' @param event The event of interest
 #' @param risk_window See note on drug exposure duration calculation
-#' @param minimum_duration The minimum duration that a patient needs to be under observation to be included in the
-#' analysis.
 #' @param drug_sym A [name] representing the column to use for drug ids, drug_concept_id by default.
 #' @param condition_sym A [name] representing the column to use for condition ids, condition_concept_id by default.
 #' @param person_sym A [name] representing the column to use for person ids, person_id by default.
@@ -36,23 +34,23 @@ getEventsFromOccurrence <- function( drug_exposure
   # Drug event window expansion
   drug_durations <- drug_exposure %>%
     inner_join( observation_periods, by = deparse( person_sym ) ) %>%
-    mutate( drug_start_day = as.integer( !!drug_start_sym - !!observation_period_start_date_sym ) ) %>%
-    filter( drug_start_day >= 0, drug_start_day <= observation_period_length ) %>%
+    mutate( drug_start_day = as.integer( !!br_symbol$drug_start_date - !!br_symbol$observation_period_start_date ) ) %>%
+    filter( !!br_symbol$drug_start_day >= 0, !!br_symbol$drug_start_day <= !!br_symbol$observation_period_length ) %>%
     transmute( !!person_sym,
-               observation_period_id,
-               observation_period_length,
+               !!br_symbol$observation_period_id,
+               !!br_symbol$observation_period_length,
                concept_id = !!drug_sym,
-               drug_start_day,
+               !!br_symbol$drug_start_day,
                drug_end_day =
-                 1L + drug_start_day +
-                 if_else( is.na( !!drug_end_sym ),
-                          if_else( is.na( !!supply_sym ), 0L, !!supply_sym ),
-                          as.integer( !!drug_end_sym - !!drug_start_sym ) )
+                 1L + !!br_symbol$drug_start_day +
+                 if_else( is.na( !!br_symbol$drug_end_date ),
+                          if_else( is.na( !!br_symbol$days_supply ), 0L, !!br_symbol$days_supply ),
+                          as.integer( !!br_symbol$drug_end_date - !!br_symbol$drug_start_date ) )
     )
 
   if ( !lasting_risk && risk_window > 0 )
     drug_durations <- drug_durations %>%
-      mutate( drug_end_day = drug_end_day + risk_window )
+      mutate( drug_end_day = !!br_symbol$drug_end_day + risk_window )
 
 
   # Make table in the db since it will be reused
@@ -61,36 +59,36 @@ getEventsFromOccurrence <- function( drug_exposure
   drug_durations <- drug_durations %>% compute()
 
   events_result <- drug_durations %>%
-    transmute( !!person_sym, concept_id,
-               event_day = drug_start_day,
+    transmute( !!person_sym, !!br_symbol$concept_id,
+               event_day = !!br_symbol$drug_start_day,
                event_flag = 1L,
-               observation_period_id,
-               observation_period_length )
+               !!br_symbol$observation_period_id,
+               !!br_symbol$observation_period_length )
 
   if( !lasting_risk )
     events_result <- events_result %>% union_all(
       drug_durations %>%
-        transmute( !!person_sym, concept_id,
-                   event_day = drug_end_day,
+        transmute( !!person_sym, !!br_symbol$concept_id,
+                   event_day = !!br_symbol$drug_end_day,
                    event_flag = -1L,
-                   observation_period_id,
-                   observation_period_length )
+                   !!br_symbol$observation_period_id,
+                   !!br_symbol$observation_period_length )
     )
 
   # Return value
   union_all( events_result,
              condition_occurrence %>%
                  inner_join( observation_periods, by = deparse( person_sym ) ) %>%
-                 mutate( event_day = as.integer( !!condition_start_sym - !!observation_period_start_date_sym ) ) %>%
-                 filter( condition_concept_id == event,
-                         event_day >= 0,
-                         event_day <= observation_period_length ) %>%
+                 mutate( event_day = as.integer( !!br_symbol$condition_start_date - !!br_symbol$observation_period_start_date ) ) %>%
+                 filter( !!br_symbol$condition_concept_id == event,
+                         !!br_symbol$event_day >= 0,
+                         !!br_symbol$event_day <= !!br_symbol$observation_period_length ) %>%
                  transmute( !!person_sym, concept_id = !!condition_sym,
-                            event_day,
+                            !!br_symbol$event_day,
                             event_flag = 1L,
-                            observation_period_id,
-                            observation_period_length ) ) %>%
-    filter( event_day <= observation_period_length )
+                            !!br_symbol$observation_period_id,
+                            !!br_symbol$observation_period_length ) ) %>%
+    filter( !!br_symbol$event_day <= !!br_symbol$observation_period_length )
 
   # Code notes on the above:
   # We add 1 to the end date since the "event" is "no longer being exposed," this also folds in with how we turn this

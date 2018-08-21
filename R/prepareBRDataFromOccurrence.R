@@ -32,9 +32,9 @@ prepareBRDataFromOccurrence <- function( con = NULL
                                        , tying = "occurrence"
                                        , risk_window = 0
                                        , minimum_duration = 0
-                                       , drug_id = `!!`(drug_sym)
-                                       , condition_id = `!!`(condition_sym)
-                                       , person_id = `!!`(person_sym) )
+                                       , drug_id = !!br_symbol$drug_concept_id
+                                       , condition_id = !!br_symbol$condition_concept_id
+                                       , person_id = !!br_symbol$person_id )
 {
   # Get symbols
   drug_sym <- enexpr( drug_id )
@@ -75,20 +75,21 @@ prepareBRDataFromOccurrence <- function( con = NULL
   observation_period <- observation_period %>%
     transmute( observation_period_id = !!person_sym,
                person_id = !!person_sym,
-               observation_period_start_date,
-               observation_period_length = observation_period_end_date - observation_period_start_date + 1L ) %>%
-    filter( observation_period_length >= minimum_duration ) %>%
+               !!br_symbol$observation_period_start_date,
+               observation_period_length =
+                 !!br_symbol$observation_period_end_date - !!br_symbol$observation_period_start_date + 1L ) %>%
+    filter( !!br_symbol$observation_period_length >= !!br_symbol$minimum_duration ) %>%
     compute() # We'll be reusing this so it's better to have a computed table
 
   flog.debug("Computed observation periods.")
 
   # Ensure expected columns in drug_exposure
-  drug_exposure <- transmute( drug_exposure,
+  drug_exposure <- transmute( !!br_symbol$drug_exposure,
                               person_id = !!person_sym,
                               drug_concept_id = !!drug_sym,
-                              drug_exposure_start_date,
-                              drug_exposure_end_date,
-                              days_supply )
+                              !!br_symbol$drug_exposure_start_date,
+                              !!br_symbol$drug_exposure_end_date,
+                              !!br_symbol$days_supply )
 
   # Derive drug durations (without risk window, possibly overlapping)
   drug_duration <- getDrugDurationsFromExposure( drug_exposure, observation_period )
@@ -100,22 +101,22 @@ prepareBRDataFromOccurrence <- function( con = NULL
   condition_occurrence <- select( condition_occurrence,
                                   person_id = !!person_sym,
                                   condition_concept_id = !!condition_sym,
-                                  condition_start_date ) %>%
-    filter( condition_concept_id %in% response_event )
+                                  !!br_symbol$condition_start_date ) %>%
+    filter( !!br_symbol$condition_concept_id %in% response_event )
 
   # Derive condition occurrence days
   condition_events <- getConditionEvents( condition_occurrence, observation_period )
 
   results <- Map( function( event_id ){
 
-    condition_event_subset <- filter( condition_events, concept_id == event_id )
+    condition_event_subset <- filter( condition_events, !!br_symbol$concept_id == event_id )
     if ( 1 > ( condition_event_subset %>% summarize( count = n() ) %>% head(1) %>% collect() )$count ){
       flog.warn( "Response event %s doesn't occur in the cohort. Failed to build data for it.", event_id )
       return ( NULL )
     }
 
     # Derive events
-    events_table <- union_all( drug_events, filter( condition_events, concept_id == event_id ) )
+    events_table <- union_all( drug_events, filter( condition_events, !!br_symbol$concept_id == event_id ) )
 
     # Prepare data
     prepareBRDataFromEvents( events_table, event_id, tying )

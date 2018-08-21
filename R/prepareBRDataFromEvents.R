@@ -17,74 +17,78 @@
 #' @import dplyr
 prepareBRDataFromEvents <- function ( all_events, event, tying ){
 
-  all_events <- all_events %>% mutate( obs_period = dense_rank( !!observation_period_sym ) )
+  all_events <- all_events %>% mutate( obs_period = dense_rank( !!br_symbol$observation_period ) )
 
   # Make events for the ends of observation periods
   obs_start_events <- all_events %>%
-    distinct( obs_period, observation_period_length ) %>%
+    distinct( !!br_symbol$obs_period, !!br_symbol$observation_period_length ) %>%
     mutate( event_day = 0L )
 
   # Make list of event times
   event_times <- all_events %>%
     # We just need the times
-    distinct( obs_period, event_day, observation_period_length ) %>%
+    distinct( !!br_symbol$obs_period, !!br_symbol$event_day, !!br_symbol$observation_period_length ) %>%
     # Add the start-of-observation events
-    union( obs_start_events ) %>%
+    union( !!br_symbol$obs_start_events ) %>%
     # Get days to end of obs period for each event
-    transmute( obs_period, event_day, days_to_end = observation_period_length - event_day ) %>%
+    transmute( !!br_symbol$obs_period, !!br_symbol$event_day,
+               days_to_end = !!br_symbol$observation_period_length - !!br_symbol$event_day ) %>%
     # Sort
-    arrange( obs_period, event_day ) %>%
+    arrange( !!br_symbol$obs_period, !!br_symbol$event_day ) %>%
     # Get interval numbering
     mutate( interval_number = row_number( ) ) %>%
     # Group by observation periods
-    group_by( obs_period ) %>%
+    group_by( !!br_symbol$obs_period ) %>%
     # Get next interval's days to end, catch unsupported DB op
-    mutate( next_interval_days_to_end = lead( days_to_end ) ) %>%
+    mutate( next_interval_days_to_end = lead( !!br_symbol$days_to_end ) ) %>%
     # Interval length = next interval days to end - this interval days to end (if not last)
-    mutate( interval_length = ifelse( is.na( next_interval_days_to_end ), days_to_end, days_to_end - next_interval_days_to_end ) ) %>%
+    mutate( interval_length = if_else( is.na( !!br_symbol$next_interval_days_to_end ),
+                                       !!br_symbol$days_to_end,
+                                       !!br_symbol$days_to_end - !!br_symbol$next_interval_days_to_end ) ) %>%
     # Ungroup
     ungroup() %>%
     # Clean up
-    select( obs_period, event_day, interval_number, interval_length )
+    select( !!br_symbol$obs_period, !!br_symbol$event_day, !!br_symbol$interval_number, !!br_symbol$interval_length )
 
   # Get sperse representations to prepare feature matrices
   feature_indeces <- all_events %>%
     # Features don't contain the target event
-    filter( concept_id != event ) %>%
+    filter( !!br_symbol$concept_id != event ) %>%
     # Get event features
     left_join( event_times, by = c( obs_period = "obs_period", event_day = "event_day" ) ) %>%
     # Get a dense numbering of drugs
-    mutate( drug_number = dense_rank( concept_id ) )
+    mutate( drug_number = dense_rank( !!br_symbol$concept_id ) )
 
   # ADE occurences
   ade_intervals <- all_events %>%
-    filter( concept_id == event ) %>%
+    filter( !!br_symbol$concept_id == event ) %>%
     # We only need obs period and event date, and we don't count multiple occurrences per interval
-    distinct( obs_period, event_day ) %>%
+    distinct( !!br_symbol$obs_period, !!br_symbol$event_day ) %>%
     # Get interval numbers
     inner_join( event_times, by = c( obs_period = "obs_period", event_day = "event_day" ) ) %>%
     # We only need interval numbers
-    select( interval_number ) %>%
+    select( !!br_symbol$interval_number ) %>%
     # Sort by intervals
-    arrange( interval_number )
+    arrange( !!br_symbol$interval_number )
 
 
   # We'll be referring to the number of intervals a lot
   number_of_intervals <- as.integer( (
     event_times %>%
-      summarize( n_intervals = max( interval_number, na.rm = T ) ) %>%
+      summarize( n_intervals = max( !!br_symbol$interval_number, na.rm = T ) ) %>%
       collect()
   )$n_intervals )
 
   # Interval lengths
-  interval_details <- event_times %>% select( interval_length, obs_period ) %>% collect()
+  interval_details <- event_times %>% select( !!br_symbol$interval_length, !!br_symbol$obs_period ) %>% collect()
 
   # Build feature matrix
 
   feature_indeces <- feature_indeces %>% collect()
 
   drug_concept_id <-
-    ( feature_indeces %>% distinct( drug_number, concept_id ) %>% arrange( drug_number ) )$concept_id
+    ( feature_indeces %>% distinct( !!br_symbol$drug_number, !!br_symbol$concept_id ) %>%
+        arrange( !!br_symbol$drug_number ) )$concept_id
 
   drug_vector <- feature_indeces$drug_number
 
@@ -105,15 +109,17 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
                   # Get interval numbers
                   inner_join( event_times, by = c( obs_period = "obs_period", event_day = "event_day" ) ) %>%
                   # We only need interval numbers
-                  select( interval_number )
+                  select( !!br_symbol$interval_number )
 
                 # Sort by intervals
                 z_elements <- ade_intervals %>% union( start_intervals ) %>%
-                  arrange( interval_number ) %>%
+                  arrange( !!br_symbol$interval_number ) %>%
                   # Get distance to next break
-                  mutate( lead_interval = lead( interval_number ) ) %>%
-                  mutate( lead_interval = ifelse( is.na( lead_interval ), number_of_intervals+1L, lead_interval ) ) %>%
-                  mutate( tie_length = lead_interval - interval_number ) %>%
+                  mutate( lead_interval = lead( !!br_symbol$interval_number ) ) %>%
+                  mutate( lead_interval = ifelse( is.na( !!br_symbol$lead_interval ),
+                                                  !!br_symbol$number_of_intervals+1L,
+                                                  !!br_symbol$lead_interval ) ) %>%
+                  mutate( tie_length = !!br_symbol$lead_interval - !!br_symbol$interval_number ) %>%
                   collect()
 
                 # Make the diagonal matrix
