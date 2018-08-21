@@ -17,7 +17,7 @@
 #' @import dplyr
 prepareBRDataFromEvents <- function ( all_events, event, tying ){
 
-  all_events <- all_events %>% mutate( obs_period = dense_rank( !!br_symbol$observation_period ) )
+  all_events <- all_events %>% mutate( obs_period = dense_rank( !!br_symbol$observation_period_id ) )
 
   # Make events for the ends of observation periods
   obs_start_events <- all_events %>%
@@ -29,7 +29,7 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
     # We just need the times
     distinct( !!br_symbol$obs_period, !!br_symbol$event_day, !!br_symbol$observation_period_length ) %>%
     # Add the start-of-observation events
-    union( !!br_symbol$obs_start_events ) %>%
+    union( obs_start_events ) %>%
     # Get days to end of obs period for each event
     transmute( !!br_symbol$obs_period, !!br_symbol$event_day,
                days_to_end = !!br_symbol$observation_period_length - !!br_symbol$event_day ) %>%
