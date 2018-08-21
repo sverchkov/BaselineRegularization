@@ -67,7 +67,6 @@ This runs baseline regularization with the default parameters, which are
 ```{r show default paraemeters, echo=FALSE}
 data.frame("Default Value" = unlist(default_params), check.names = F)
 ```
-
 (see the documentation for [defineBRParameters()] for further details).
 
 You may set different parameters using [defineBRParameters()] like so:
