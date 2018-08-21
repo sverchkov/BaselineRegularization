@@ -1,0 +1,95 @@
+---
+title: 'Baseline Regularization'
+author: "Yuriy Sverchkov"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Baseline Regularization}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Baseline Regularization is a package for estimating the effects of drugs on condition risk, designed to work with data
+in OMOP CDM format.
+This document contains a few examples illustrating how to run Baseline Regularization.
+For this vignette we will assume you have loaded the package.
+```{r load package}
+library(BaselineRegularization)
+```
+```{r prepare sneaky variables, include=FALSE} 
+default_params <- defineBRParameters()
+```
+
+## Data
+Typically, one would connect to a database containing the CDM using the DBI package.
+For the examples here, we will use _a much smaller dataset_
+
+```{r load data}
+# TODO: Load data
+```
+
+## First example: one condition, all drugs
+The simplest way to use Baseline Regularization is to apply it directly to the data to predict the effects of all drugs in the data on the risk of one condition of interest.
+We separate the process into three major steps:
+1. generating feature matrix and response vector from the data,
+2. fitting baseline regularization, and
+3. inspecting the results.
+
+### Preparing the data: generating the feature matrix and response vector
+
+To generate the feature matrix and response vector, we have to have a condition of interest the risk of which we wish to model, and data from which to extract the drug features and patient timelines.
+For our example, our condition of interest will be `#TODO`
+```{r define response event, eval=FALSE}
+response_event = #TODO decide on a concept id!
+```
+
+When available, we recommend using derived CDM tables for analysis.
+```{r build data simple, eval=FALSE}
+br_data <- prepareBRDataFromEras(
+  observation_period = observation_period,
+  drug_era = drug_era,
+  condition_era = condition_era,
+  response_event = response_event )
+```
+Baseline Regularization can also use clinical tables that are always available (see [Using clinical tables for preparing the data])
+
+### Fitting baseline regularization
+
+Once the data is built, running baseline regularization is simple:
+```{r fit BR simple, eval=FALSE}
+fit1 <- fitBaselineRegularization( br_data )
+```
+
+This runs baseline regularization with the default parameters, which are
+```{r show default paraemeters, echo=FALSE}
+data.frame("Default Value" = unlist(default_params), check.names = F)
+```
+
+(see the documentation for [defineBRParameters()] for further details).
+
+You may set different parameters using [defineBRParameters()] like so:
+```{r fit BR with parameters, eval=FALSE}
+parameters <- defineBRParameters( lambda1 = 1 )
+
+fit2 <- fitBaselineRegularization( br_data, parameters )
+```
+Note that only the parameters you'd like to change from the default need to be specified, the rest keep their default values.
+
+### Inspecting the results
+
+## Second example: managing drugs and drug categories
+Without guidance from the user, Baseline Regularization treats each drug that has a distinct concept_id
+
+## Third example: estimating the risk of multiple conditions
+
+## Fourth example: using condition categories
+
+## Using clinical tables for preparing the data
+
+## Additional data preparation options
+
+## Using non-CDM data
+The data preparation functions were designed for OMOP CDM data, but they are quite flexible, and, could be applied to any data that provides the right columns. (TODO: Expand on this)

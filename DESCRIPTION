@@ -21,5 +21,8 @@ Suggests:
   DBI (>= 1.0.0),
   dbplyr (>= 1.2),
   RPostgreSQL (>= 0.6),
-  RSQLite (>= 2.1)
-RoxygenNote: 6.0.1
+  RSQLite (>= 2.1),
+  knitr,
+  rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 6.1.0
