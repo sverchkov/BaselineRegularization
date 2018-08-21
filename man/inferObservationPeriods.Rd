@@ -4,7 +4,8 @@
 \alias{inferObservationPeriods}
 \title{Construct an observation period table from a set of tables}
 \usage{
-inferObservationPeriods(..., patient_id = patient_id, time_match = "_date$")
+inferObservationPeriods(..., patient_id = patient_id,
+  time_match = "_date$")
 }
 \arguments{
 \item{...}{One or more tables}
