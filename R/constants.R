@@ -20,6 +20,7 @@ br_symbol <- {
     "drug_era_start_date",
     "drug_exposure_end_date",
     "drug_exposure_start_date",
+    "drug_number",
     "drug_start_day",
     "event_day",
     "event_time",
