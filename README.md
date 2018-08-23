@@ -69,6 +69,8 @@ devtools::install_github("sverchkov/BaselineRegularization")
 Getting Involved
 ----------------
 
+* We use the [GitHub issue tracker](https://github.com/sverchkov/BaselineRegularization/issues) for bugs and feature requests
+
 License
 -------
 
