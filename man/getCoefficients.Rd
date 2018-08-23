@@ -5,8 +5,9 @@
 \title{Get Beta Coefficients from fit}
 \usage{
 getCoefficients(fit, con = NULL, names_table = "concept",
-  id_var = concept_id, name_var = concept_name, sort_by = desc(abs(Beta)),
-  keep_zeros = F)
+  id_var = !!(br_symbol$concept_id),
+  name_var = !!(br_symbol$concept_name),
+  sort_by = desc(abs(!!(br_symbol$Beta))), keep_zeros = F)
 }
 \arguments{
 \item{fit}{the fit obtained from [fitBaselineRegularization].}

@@ -22,3 +22,6 @@ An object representing the fit model, with elements:
 \description{
 Fit Baseline Regularization with the given parameters
 }
+\author{
+Zhaobin Kuang
+}

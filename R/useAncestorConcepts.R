@@ -17,9 +17,9 @@
 #' @export
 useAncestorConcepts <- function ( record_table,
                                   ancestors,
-                                  record_table_column = concept_id,
-                                  ancestor_column = ancestor_concept_id,
-                                  descendant_column = descendant_concept_id,
+                                  record_table_column = !!br_symbol$concept_id,
+                                  ancestor_column = !!br_symbol$ancestor_concept_id,
+                                  descendant_column = !!br_symbol$descendant_concept_id,
                                   copy = FALSE )
 {
 

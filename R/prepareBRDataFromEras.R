@@ -40,28 +40,32 @@ prepareBRDataFromEras <- function ( con = NULL
     stop( flog.fatal( "Current implementation only supports independent observation periods." ) )
   else {
     working_observation_periods <- observation_period %>%
-      mutate( observation_period_length = 1L + observation_period_end_date - observation_period_start_date ) %>%
-      filter( observation_period_length >= minimum_duration )
+      mutate( observation_period_length =
+                1L + !!br_symbol$observation_period_end_date - !!br_symbol$observation_period_start_date ) %>%
+      filter( !!br_symbol$observation_period_length >= minimum_duration )
   }
 
   # Get drug durations from drug eras
   drug_durations <- inner_join( drug_era, working_observation_periods, by = "person_id" ) %>%
-    filter( drug_era_start_date >= observation_period_start_date, drug_era_end_date < observation_period_end_date ) %>%
-    transmute( observation_period_id,
-               observation_period_length,
-               concept_id = drug_concept_id,
-               drug_start_day = as.integer( drug_era_start_date - observation_period_start_date ),
-               drug_end_day = as.integer( drug_era_end_date - observation_period_end_date ) ) %>%
-    mutate( drug_end_day = ifelse( !is.na( drug_end_day ), drug_end_day, drug_start_day ) + 1L )
+    filter( !!br_symbol$drug_era_start_date >= !!br_symbol$observation_period_start_date,
+            !!br_symbol$drug_era_end_date < !!br_symbol$observation_period_end_date ) %>%
+    transmute( !!br_symbol$observation_period_id,
+               !!br_symbol$observation_period_length,
+               concept_id = !!br_symbol$drug_concept_id,
+               drug_start_day = as.integer( !!br_symbol$drug_era_start_date - !!br_symbol$observation_period_start_date ),
+               drug_end_day = as.integer( !!br_symbol$drug_era_end_date - !!br_symbol$observation_period_end_date ) ) %>%
+    mutate( drug_end_day = if_else( is.na( !!br_symbol$drug_end_day ),
+                                    !!br_symbol$drug_start_day,
+                                    !!br_symbol$drug_end_day ) + 1L )
 
   # Get drug events
   drug_events <- getDrugEvents( drug_durations, risk_window )
 
   # Derive condition days
-  condition_events <- getConditionEvents( condition_era, working_observation_periods, date_column = condition_era_start_date )
+  condition_events <- getConditionEvents( condition_era, working_observation_periods, date_column = !!br_symbol$condition_era_start_date )
 
   # Derive events
-  events_table <- union_all( drug_events, filter( condition_events, concept_id == response_event ) )
+  events_table <- union_all( drug_events, filter( condition_events, !!br_symbol$concept_id == response_event ) )
 
   # Return
   prepareBRDataFromEvents( events_table, response_event, tying )

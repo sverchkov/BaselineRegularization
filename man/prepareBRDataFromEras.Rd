@@ -4,9 +4,10 @@
 \alias{prepareBRDataFromEras}
 \title{Create data object based on era tables}
 \usage{
-prepareBRDataFromEras(con = NULL, observation_period = "observation_period",
-  drug_era = "drug_era", condition_era = "condition_era", response_event,
-  tying = "occurence", risk_window = 0, minimum_duration = 0,
+prepareBRDataFromEras(con = NULL,
+  observation_period = "observation_period", drug_era = "drug_era",
+  condition_era = "condition_era", response_event, tying = "occurence",
+  risk_window = 0, minimum_duration = 0,
   independent_observation_periods = TRUE)
 }
 \arguments{

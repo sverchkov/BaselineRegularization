@@ -49,7 +49,7 @@ inferObservationPeriods <- function ( ...
 
   result %>% group_by( `!!`(ptid) ) %>%
     summarize(
-      observation_period_start_date = min( event_time, na.rm = T ),
-      observation_period_end_date = max( event_time, na.rm = T ) ) %>%
+      observation_period_start_date = min( !!br_symbol$event_time, na.rm = T ),
+      observation_period_end_date = max( !!br_symbol$event_time, na.rm = T ) ) %>%
     ungroup()
 }

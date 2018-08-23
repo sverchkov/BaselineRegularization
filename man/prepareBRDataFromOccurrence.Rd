@@ -4,12 +4,14 @@
 \alias{prepareBRDataFromOccurrence}
 \title{Create data object for baseline regularization}
 \usage{
-prepareBRDataFromOccurrence(con = NULL, drug_exposure = "drug_exposure",
+prepareBRDataFromOccurrence(con = NULL,
+  drug_exposure = "drug_exposure",
   condition_occurrence = "condition_occurrence",
   visit_occurrence = "visit_occurrence", response_event,
   tying = "occurrence", risk_window = 0, minimum_duration = 0,
-  drug_id = `!!`(drug_sym), condition_id = `!!`(condition_sym),
-  person_id = `!!`(person_sym))
+  drug_id = !!br_symbol$drug_concept_id,
+  condition_id = !!br_symbol$condition_concept_id,
+  person_id = !!br_symbol$person_id)
 }
 \arguments{
 \item{con}{A DBI Connection to an OMOP CDM database. If this is absent or NULL, tables must be provided as

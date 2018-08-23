@@ -29,7 +29,7 @@ fitBaselineRegularization <- function( br_data, parameters = defineBRParameters(
   n_beta <- ncol(X)
 
   # initialize loop
-  t <- Matrix(-abs(rnorm(n_t)/10)) # Initializes a column vector to -abs( Normal(0,0.1) )
+  t <- Matrix(-abs(stats::rnorm(n_t)/10)) # Initializes a column vector to -abs( Normal(0,0.1) )
   beta <- Matrix(rep(0,n_beta)) # Column of zeros
 
   lam1 <- parameters$lambda1
@@ -78,7 +78,7 @@ fitBaselineRegularization <- function( br_data, parameters = defineBRParameters(
       betaOld <- beta
 
       if ( 0 == lam1 ) {
-        beta_fit <- lsfit( x=X, y=brBetaResponse, wt=brBetaWeights, intercept = FALSE, tolerance = 1e-8 )
+        beta_fit <- stats::lsfit( x=X, y=brBetaResponse, wt=brBetaWeights, intercept = FALSE, tolerance = 1e-8 )
         beta <- Matrix( beta_fit$coefficients )
       } else {
         # Note: glmnet doesn't like only getting one lambda, so we give it a sequence and then grab the one we need.

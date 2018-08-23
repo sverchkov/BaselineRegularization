@@ -5,12 +5,15 @@
 \title{Make events table from occurrence information (internal function)}
 \usage{
 getEventsFromOccurrence(drug_exposure, condition_occurrence,
-  observation_periods, event, risk_window, drug_sym, condition_sym, person_sym)
+  observation_periods, event, risk_window, drug_sym, condition_sym,
+  person_sym)
 }
 \arguments{
 \item{drug_exposure}{A dataframe-like object corresponding to the OMOP CDM `drug_exposure` table}
 
 \item{condition_occurrence}{A dataframe-like object corresponding to the OMOP CDM `condition_occurrence` table}
+
+\item{observation_periods}{A dataframe-like object corresponding to the OMOP CDM `observation_period` table}
 
 \item{event}{The event of interest}
 
@@ -21,11 +24,6 @@ getEventsFromOccurrence(drug_exposure, condition_occurrence,
 \item{condition_sym}{A [name] representing the column to use for condition ids, condition_concept_id by default.}
 
 \item{person_sym}{A [name] representing the column to use for person ids, person_id by default.}
-
-\item{observation_period}{A dataframe-like object corresponding to the OMOP CDM `observation_period` table}
-
-\item{minimum_duration}{The minimum duration that a patient needs to be under observation to be included in the
-analysis.}
 }
 \description{
 Make events table for [prepareBRDataFromEvents] from occurrence tables (rather than era tables).
