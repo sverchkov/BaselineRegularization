@@ -7,10 +7,14 @@
 #' table itself in a dataframe-like R object
 #' @param condition_occurrence Either the name of the `condition_occurrence` table in the database specified by `con`
 #' or the table itself in a dataframe-like R object
-#' @param visit_occurrence (optional) Either the name of the `visit_occurrence` table in the database specified by `con` or the
-#' table itself in a dataframe-like R object.
+#' @param observation_period (optional) Either the name of the `observation_period` table in the database specified by
+#' `con` or the table itself in a dataframe-like R object. If this is specified it defines the observation periods; if
+#' it is not, the observation periods are inferred from the drug exposure, condition occurrence, and (optionally) visit
+#' occurrence tables.
+#' @param visit_occurrence (optional) Either the name of the `visit_occurrence` table in the database specified by `con`
+#' or the table itself in a dataframe-like R object.
 #' A patient will be considered observed from their first to their last visit, drug exposure and/or
-#' condition occurence
+#' condition occurence.
 #' @param response_event The condition_concept_id of the event of interest
 #' @param tying Parameter tying mode, "interval", or "occurence" (default)
 #' @param risk_window The number of days right after a drug exposure during which the patient is considered still under
@@ -27,6 +31,7 @@
 prepareBRDataFromOccurrence <- function( con = NULL
                                        , drug_exposure = "drug_exposure"
                                        , condition_occurrence = "condition_occurrence"
+                                       , observation_period = "observation_period"
                                        , visit_occurrence = "visit_occurrence"
                                        , response_event
                                        , tying = "occurrence"
@@ -50,13 +55,16 @@ prepareBRDataFromOccurrence <- function( con = NULL
   drug_exposure <- getTable( con, drug_exposure, "drug exposure" )
   condition_occurrence <- getTable( con, condition_occurrence, "condition occurrence" )
   visit_occurrence <- getTable( con, visit_occurrence, "visit occurrence" )
+  observation_period <- getTable( con, observation_period, "observation period" )
 
-  # Infer observation periods
-  flog.debug("Inferring observation periods")
-  observation_period <- inferObservationPeriods( drug_exposure,
-                                                  condition_occurrence,
-                                                  visit_occurrence,
-                                                  patient_id = !!person_sym )
+  if ( is.null( observation_period ) ){
+    # Infer observation periods
+    flog.debug("Inferring observation periods")
+    observation_period <- inferObservationPeriods( drug_exposure,
+                                                    condition_occurrence,
+                                                    visit_occurrence,
+                                                    patient_id = !!person_sym )
+  }
 
   # Check DBs
   for ( the_table in list( drug_exposure, condition_occurrence, observation_period ) ){
@@ -78,13 +86,13 @@ prepareBRDataFromOccurrence <- function( con = NULL
                !!br_symbol$observation_period_start_date,
                observation_period_length =
                  !!br_symbol$observation_period_end_date - !!br_symbol$observation_period_start_date + 1L ) %>%
-    filter( !!br_symbol$observation_period_length >= !!br_symbol$minimum_duration ) %>%
+    filter( !!br_symbol$observation_period_length >= minimum_duration ) %>%
     compute() # We'll be reusing this so it's better to have a computed table
 
   flog.debug("Computed observation periods.")
 
   # Ensure expected columns in drug_exposure
-  drug_exposure <- transmute( !!br_symbol$drug_exposure,
+  drug_exposure <- transmute( drug_exposure,
                               person_id = !!person_sym,
                               drug_concept_id = !!drug_sym,
                               !!br_symbol$drug_exposure_start_date,
