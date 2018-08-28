@@ -10,6 +10,7 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
 ```
 
 Baseline Regularization is a package for estimating the effects of drugs on condition risk, designed to work with data
@@ -47,7 +48,7 @@ response_event = 137829 # The concept id for "Aplastic anemia"
 ```
 
 When available, we recommend using derived CDM tables for analysis, but in our SynPUF data, we only have clinical tables available, and we will use them for this example.
-```{r build data simple}
+```{r build data simple, eval = FALSE}
 br_data <- prepareBRDataFromOccurrence(
   observation_period = synpuf_mini$observation_period,
   condition_occurrence = synpuf_mini$condition_occurrence,
@@ -65,8 +66,8 @@ fit1 <- fitBaselineRegularization( br_data )
 ```
 
 This runs baseline regularization with the default parameters, which are
-```{r show default paraemeters, echo=FALSE}
-data.frame("Default Value" = unlist(default_params), check.names = F)
+```{r show default paraemeters, echo=FALSE, results='asis'}
+knitr::kable( data.frame("Default Value" = unlist(default_params), check.names = F) )
 ```
 (see the documentation for [defineBRParameters()] for further details).
 
@@ -81,17 +82,119 @@ Note that only the parameters you'd like to change from the default need to be s
 ### Inspecting the results
 
 ## Second example: managing drugs and drug categories
-Without guidance from the user, Baseline Regularization treats each drug that has a distinct concept_id
+Without guidance from the user, Baseline Regularization treats each drug that has a distinct concept_id and occurs in the data as a feature for the model.
+However, we are often interested in examining broader categories of drugs.
+As an example, consider the drug categories used in the OMOP task [TODO: cite]:
+```{r show omop drug table, echo=FALSE, results = 'asis'}
+data("omop_concept_names")
+knitr::kable(
+  ( doi_concept_names <- omop_concept_names %>%
+    select( concept_id, concept_name ) %>%
+    filter( concept_id %in% 600000001:600000010 ) %>%
+    arrange( concept_id ) ) %>%
+    mutate( concept_id = as.character(concept_id) ), align = "rl" )
+```
+These drug categories are broad.
+In the OMOP CDM vocabulary, the `concept_ancestor` table can be used to infer which concept_id's are encompassed by such broader concepts.
+Here, we load a small subset of this table included with our package:
+```{r load doi concept ancestr}
+data( "omop_doi_concept_ancestor" )
+```
+To illustrate, here are a few drug concept ids in our data fall into the "ACE Inhibitor" category:
+```{r show drugs matching ACE Inhibitors, results='asis'}
+data( "cdm_some_concept_names" )
+drug_concept_names <-
+  synpuf_mini$drug_exposure %>%
+  distinct( drug_concept_id ) %>%
+  left_join( cdm_some_concept_names, by = c("drug_concept_id"="concept_id") )
+doi_drug_names <- drug_concept_names %>%
+  inner_join( omop_doi_concept_ancestor, by = c("drug_concept_id"="descendant_concept_id") )
+doi_drug_names %>%
+  filter( ancestor_concept_id == 600000001 ) %>%
+  select( concept_id = drug_concept_id, concept_name ) %>%
+  head() %>%
+  mutate( concept_id = as.character(concept_id) ) %>%
+  knitr::kable()
+```
+To make use of the `concept_ancestor` table, we introduce the function `ancestorConceptProcessor`, which we can use as follows:
+```{r define drug categories, eval=FALSE}
+drug_concept_processor <- ancestorConceptProcessor(
+  concept_ancestor = omop_doi_concept_ancestor,
+  concept_list = 600000001:600000010,
+  handle_remaining = "drop" ) 
+```
+See `?ancestorConceptProcessor` for more details, briefly, the parameters are:
+
+ * `concept_ancestor` the table that defines the concept ancestor relationships
+ * `concept_list` the array of ancestor concepts to use as features (in this case the concept_id numbers are conveniently consecutive numbers from 600000001 to 600000010)
+ * `handle_remaining` a string that defines how to handle concepts that aren't descendants of the concepts in `concept_list`: `"drop"` (the default) simply removes them from the analysis. 
+
+Then, we add it to the call of the data preparation function.
+```{r prepare data with categories, eval=FALSE}
+br_data_omop_drugs <- prepareBRDataFromOccurrence(
+  observation_period = synpuf_mini$observation_period,
+  condition_occurrence = synpuf_mini$condition_occurrence,
+  drug_exposure = synpuf_mini$drug_exposure,
+  response_event = response_event,
+  drug_concept_processor = drug_concept_processor )
+```
 
 ## Third example: estimating the risk of multiple conditions
+It is often of interest to use the same data to model the risk of multiple conditions.
+We provide a convenient way to run Baseline Regularization for multiple condition targets:
+```{r run with multiple conditions, eval=FALSE}
+response_events = c(
+  1, # Something
+  2, # Something
+  3) # Something
+
+br_data_multiple_conditions <- prepareBRDataFromOccurrence(
+  observation_period = synpuf_mini$observation_period,
+  condition_occurrence = synpuf_mini$condition_occurrence,
+  drug_exposure = synpuf_mini$drug_exposure,
+  response_event = response_events, # <- We simply pass the array of concept ids to the response_event parameter
+  drug_concept_processor = drug_concept_processor ) # We can still specify drug categories
+
+# The call to the fit function doesn't change
+fit_multiple <- fitBaselineRegularization( br_data_multiple_conditions )
+```
 
 ## Fourth example: using condition categories
+Just as we specified drug categories, we can specify condition categories.
+Again, we will use the OMOP task as an example
+```{r load condition map}
+data("omop_hoi_conditions_map")
+```
+Next, construct a processor for condition concept IDs:
+```{r make condition processor, eval = FALSE}
+condition_concept_processor <- ancestorConceptProcessor(
+  concept_ancestor = omop_hoi_conditions_map,
+  concept_list = 501L:510L )
+```
+Simply add the processor to the data preparation call:
+```{r run with omop conditions, eval=FALSE}
+omop_events = 501L:510L # These are the IDs we gave the OMOP event categories
+
+br_data_omop_conditions <- prepareBRDataFromOccurrence(
+  observation_period = synpuf_mini$observation_period,
+  condition_occurrence = synpuf_mini$condition_occurrence,
+  drug_exposure = synpuf_mini$drug_exposure,
+  response_event = omop_events,
+  drug_concept_processor = drug_concept_processor, # We can still specify drug categories
+  condition_concept_processor = condition_concept_processor )
+
+# The call to the fit function doesn't change
+fit_omop <- fitBaselineRegularization( br_data_omop_conditions )
+```
 
 ## Using a database source for preparing the data
+Coming soon!
 
 ## Using derived CDM tables for preparing the data
+Coming soon!
 
 ## Additional data preparation options
+Coming soon!
 
 ## Using non-CDM data
 The data preparation functions were designed for OMOP CDM data, but they are quite flexible, and, could be applied to any data that provides the right columns. (TODO: Expand on this)

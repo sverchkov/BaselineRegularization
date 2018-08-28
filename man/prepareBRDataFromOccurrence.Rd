@@ -7,6 +7,7 @@
 prepareBRDataFromOccurrence(con = NULL,
   drug_exposure = "drug_exposure",
   condition_occurrence = "condition_occurrence",
+  observation_period = "observation_period",
   visit_occurrence = "visit_occurrence", response_event,
   tying = "occurrence", risk_window = 0, minimum_duration = 0,
   drug_id = !!br_symbol$drug_concept_id,
@@ -23,10 +24,15 @@ table itself in a dataframe-like R object}
 \item{condition_occurrence}{Either the name of the `condition_occurrence` table in the database specified by `con`
 or the table itself in a dataframe-like R object}
 
-\item{visit_occurrence}{(optional) Either the name of the `visit_occurrence` table in the database specified by `con` or the
-table itself in a dataframe-like R object.
+\item{observation_period}{(optional) Either the name of the `observation_period` table in the database specified by
+`con` or the table itself in a dataframe-like R object. If this is specified it defines the observation periods; if
+it is not, the observation periods are inferred from the drug exposure, condition occurrence, and (optionally) visit
+occurrence tables.}
+
+\item{visit_occurrence}{(optional) Either the name of the `visit_occurrence` table in the database specified by `con`
+or the table itself in a dataframe-like R object.
 A patient will be considered observed from their first to their last visit, drug exposure and/or
-condition occurence}
+condition occurence.}
 
 \item{response_event}{The condition_concept_id of the event of interest}
 

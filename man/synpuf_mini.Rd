@@ -6,15 +6,14 @@
 \title{A mini subset of the synpuf dataset in OMOP CDM}
 \format{a list of dataframes: `observation_period`, `condition_occurrence`, `drug_exposure`}
 \source{
-synpuf (TODO: fill out)
+The CMS 2008-2010 Data Entrepreneurs’ Synthetic Public Use File (DE-SynPUF)
+https://www.cms.gov/Research-Statistics-Data-and-Systems/Downloadable-Public-Use-Files/SynPUFs/DE_Syn_PUF.html
 }
 \usage{
-data(synpud_mini)
+data("synpuf_mini")
 }
 \description{
-A mini subset of the synpuf dataset in OMOP CDM
-}
-\references{
-TODO: fill out
+A mini subset of the CMS 2008-2010 Data Entrepreneurs’ Synthetic Public Use File (DE-SynPUF) dataset
+in OMOP CDM V.5.
 }
 \keyword{datasets}
