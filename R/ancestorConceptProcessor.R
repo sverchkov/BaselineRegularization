@@ -17,7 +17,6 @@
 #' @author Yuriy Sverchkov
 #' @import dplyr
 #' @import futile.logger
-#' @import stats
 #' @export
 ancestorConceptProcessor <- function (
   concept_ancestor = "concept_ancestor",
@@ -53,7 +52,7 @@ ancestorConceptProcessor <- function (
     concept_tbl <- distinct( !!as.symbol(column) )
 
     # Filter down ancestor table
-    ancestor_tbl <- inner_join( ancestor_tbl, concept_tbl, by = setNames( column, ancestor_column ), copy = copy )
+    ancestor_tbl <- inner_join( ancestor_tbl, concept_tbl, by = stats::setNames( column, ancestor_column ), copy = copy )
 
   } else if ( !is.null( concept_list ) && is.null( concept_tbl ) ) { # Use concept_list
 
@@ -78,8 +77,8 @@ ancestorConceptProcessor <- function (
   # Make the processor function
   function ( record_table, record_table_column = record_table_column, out_column = out_column ){
     record_table %>%
-      left_join( ancestor_tbl, by = setNames( ancestor_column, record_table_column ), copy = copy ) %>%
+      left_join( ancestor_tbl, by = stats::setNames( ancestor_column, record_table_column ), copy = copy ) %>%
       handler() %>%
-      rename_at( vars( ancestor_column ), function (x) out_column ) # Using rename at to get around NSE nonsense
+      rename( !!ancestor_sym := !!as.symbol( out_column ) )
   }
 }

@@ -5,7 +5,7 @@
 #' @param record_table The table to process
 #' @param record_table_column The record table column to process
 #' @param out_column The column to which to write the processor result
-#' @result `record_table` with `out_column` added, being a copy of `record_table_column`
+#' @return `record_table` with `out_column` added, being a copy of `record_table_column`
 #'
 #' @import dplyr
 passthroughConceptProcessor <- function (
