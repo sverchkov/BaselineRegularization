@@ -49,7 +49,7 @@ response_event = 137829 # The concept id for "Aplastic anemia"
 
 When available, we recommend using derived CDM tables for analysis, but in our SynPUF data, we only have clinical tables available, and we will use them for this example.
 ```{r build data simple, eval = FALSE}
-br_data <- prepareBRDataFromOccurrence(
+br_data <- prepareBRData(
   observation_period = synpuf_mini$observation_period,
   condition_occurrence = synpuf_mini$condition_occurrence,
   drug_exposure = synpuf_mini$drug_exposure,
@@ -131,7 +131,7 @@ See `?ancestorConceptProcessor` for more details, briefly, the parameters are:
 
 Then, we add it to the call of the data preparation function.
 ```{r prepare data with categories, eval=FALSE}
-br_data_omop_drugs <- prepareBRDataFromOccurrence(
+br_data_omop_drugs <- prepareBRData(
   observation_period = synpuf_mini$observation_period,
   condition_occurrence = synpuf_mini$condition_occurrence,
   drug_exposure = synpuf_mini$drug_exposure,
@@ -148,7 +148,7 @@ response_events = c(
   2, # Something
   3) # Something
 
-br_data_multiple_conditions <- prepareBRDataFromOccurrence(
+br_data_multiple_conditions <- prepareBRData(
   observation_period = synpuf_mini$observation_period,
   condition_occurrence = synpuf_mini$condition_occurrence,
   drug_exposure = synpuf_mini$drug_exposure,
@@ -175,7 +175,7 @@ Simply add the processor to the data preparation call:
 ```{r run with omop conditions, eval=FALSE}
 omop_events = 501L:510L # These are the IDs we gave the OMOP event categories
 
-br_data_omop_conditions <- prepareBRDataFromOccurrence(
+br_data_omop_conditions <- prepareBRData(
   observation_period = synpuf_mini$observation_period,
   condition_occurrence = synpuf_mini$condition_occurrence,
   drug_exposure = synpuf_mini$drug_exposure,
