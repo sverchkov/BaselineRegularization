@@ -17,6 +17,7 @@
 #' @author Yuriy Sverchkov
 #' @import dplyr
 #' @import futile.logger
+#' @importFrom rlang :=
 #' @export
 ancestorConceptProcessor <- function (
   concept_ancestor = "concept_ancestor",
@@ -56,29 +57,32 @@ ancestorConceptProcessor <- function (
 
   } else if ( !is.null( concept_list ) && is.null( concept_tbl ) ) { # Use concept_list
 
-    ancestor_tbl <- ancestor_tbl %>% filter( ancestor_sym %in% concept_list )
+    ancestor_tbl <- ancestor_tbl %>% filter( !!ancestor_sym %in% concept_list )
 
   } else if ( !is.null( concept_list ) && !is.null( concept_tbl ) ) {
 
-    warn( flog.error( "Both concept_list and concept_tbl provided to ancestorConceptProcessor. Using neither." ) )
+    warning( flog.error( "Both concept_list and concept_tbl provided to ancestorConceptProcessor. Using neither." ) )
 
   } # If using neither we just use everything in the ancestor table
 
-  # Make the handler function
-  handler = switch (
+  # Make the processor function, depending on handler style
+  switch (
     EXPR = handle_remaining,
-    passthrough = function ( tbl_in )
-      mutate( tbl_in, if_else( is.na( ancestor_sym ), !!descendant_sym, !!ancestor_sym )),
+    passthrough =
+      function ( record_table, record_table_column = record_table_column, out_column = out_column ){
+        record_table %>%
+          left_join( ancestor_tbl, by = stats::setNames( descendant_column, record_table_column ), copy = copy ) %>%
+          mutate( if_else( is.na( !!ancestor_sym ), !!as.symbol( record_table_column ), !!ancestor_sym ) ) %>%
+          mutate( !!as.symbol( out_column ) := !!ancestor_sym ) %>%
+          select( -!!ancestor_sym )
+      },
     drop =, # Drop will be the default
-    function ( tbl_in )
-      filter( tbl_in, !is.na( ancestor_sym ) )
+    function ( record_table, record_table_column = record_table_column, out_column = out_column ){
+      record_table %>%
+        left_join( ancestor_tbl, by = stats::setNames( descendant_column, record_table_column ), copy = copy ) %>%
+        filter( !is.na( !!ancestor_sym ) ) %>%
+        mutate( !!as.symbol( out_column ) := !!ancestor_sym ) %>% # This makes sure to overwrite if out_column exists
+        select( -!!ancestor_sym ) # Unlike rename which can yield duplicate columns
+    }
   )
-
-  # Make the processor function
-  function ( record_table, record_table_column = record_table_column, out_column = out_column ){
-    record_table %>%
-      left_join( ancestor_tbl, by = stats::setNames( ancestor_column, record_table_column ), copy = copy ) %>%
-      handler() %>%
-      rename( !!ancestor_sym := !!as.symbol( out_column ) )
-  }
 }
