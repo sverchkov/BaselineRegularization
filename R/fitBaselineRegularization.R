@@ -17,7 +17,7 @@
 fitBaselineRegularization <- function( br_data, parameters = defineBRParameters() ){
 
   if ( is.null( br_data ) )
-    storp( flog.fatal("Attempted to run fitBaselineRegularization with bad input.") )
+    stop ( flog.fatal("Attempted to run fitBaselineRegularization with bad input.") )
   if ( is.null( br_data$X ) && is.list( br_data ) )
     return ( lapply( br_data, fitBaselineRegularization, parameters ) )
 
