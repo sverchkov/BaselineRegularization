@@ -9,7 +9,7 @@ prepareBRData(con = NULL, observation_period = "observation_period",
   drug_exposure = "drug_exposure",
   condition_occurrence = "condition_occurrence",
   visit_occurrence = "visit_occurrence", response_event,
-  tying = "occurence", risk_window = 0L, minimum_duration = 0L,
+  tying = "occurrence", risk_window = 0L, minimum_duration = 0L,
   drug_concept_processor = passthroughConceptProcessor,
   condition_concept_processor = passthroughConceptProcessor)
 }
@@ -42,6 +42,10 @@ or the table itself in a dataframe-like R object, only used to infer observation
 exposure.}
 
 \item{minimum_duration}{The number of days a patient must be under observation to be included in the analysis.}
+
+\item{drug_concept_processor}{A processor function for drug concepts}
+
+\item{condition_concept_processor}{A processor function for conditions}
 }
 \value{
 An object containing the matrices X, Z, y
