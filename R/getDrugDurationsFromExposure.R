@@ -8,9 +8,7 @@
 #' @param observation_period A dataframe-like object corresponding to the OMOP CDM `observation_period` table
 #'
 #' @author Yuriy Sverchkov
-#' @importFrom rlang .data
 #' @import dplyr
-#' @import futile.logger
 getDrugDurationsFromExposure <- function ( drug_exposure, observation_period )
 {
   # Result
