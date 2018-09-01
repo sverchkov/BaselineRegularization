@@ -4,6 +4,10 @@
 #' (internally called function)
 #'
 #' @param number_of_intervals The number of intervals
+#' @param number_of_features The number of features
+#' @param interval_numbers Array of interval numbers (1-based indeces) for flags
+#' @param feature_numbers Array of feature numbers (1-based indeces) for flags
+#' @param flags Array of +1/-1/0 indicating intervals at which feature durations start/end
 #' @return A matrix with `number_of_intervals` rows and `number_of_features` columns, where features are filled in with
 #' 1s according to the flags turning them on/off.
 buildFeatureMatrix <- function ( number_of_intervals, number_of_features, interval_numbers, feature_numbers, flags ) {
