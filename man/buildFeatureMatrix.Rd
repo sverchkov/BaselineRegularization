@@ -9,6 +9,14 @@ buildFeatureMatrix(number_of_intervals, number_of_features,
 }
 \arguments{
 \item{number_of_intervals}{The number of intervals}
+
+\item{number_of_features}{The number of features}
+
+\item{interval_numbers}{Array of interval numbers (1-based indeces) for flags}
+
+\item{feature_numbers}{Array of feature numbers (1-based indeces) for flags}
+
+\item{flags}{Array of +1/-1/0 indicating intervals at which feature durations start/end}
 }
 \value{
 A matrix with `number_of_intervals` rows and `number_of_features` columns, where features are filled in with
