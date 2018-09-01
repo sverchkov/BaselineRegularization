@@ -12,7 +12,7 @@
 #' @param event The event of interest the risk of which to estimate.
 #' @param tying The type of tying to use (`interval` or `occurrence`).
 #' @return Data for [fitBaselineRegularization].
-#'
+#' @export
 #' @author Yuriy Sverchkov
 #' @import dplyr
 prepareBRDataFromEvents <- function ( all_events, event, tying ){
@@ -84,25 +84,24 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
 
   # Build feature matrix
 
-  feature_indeces <- feature_indeces %>% collect()
+  feature_indeces <- feature_indeces %>%
+    ungroup() %>%
+    arrange( !!br_symbol$interval_number, !!br_symbol$drug_number ) %>%
+    collect()
 
   drug_concept_id <-
     ( feature_indeces %>% distinct( !!br_symbol$drug_number, !!br_symbol$concept_id ) %>%
         arrange( !!br_symbol$drug_number ) )$concept_id
 
-  drug_vector <- feature_indeces$drug_number
-
-  X <- sparseMatrix( i = feature_indeces$interval_number
-                     , j = drug_vector
-                     , x = feature_indeces$event_flag
-                     , dims = c( number_of_intervals, max( drug_vector ) ) )
-
-  # Fill exposure matrix (we marked the start of each exposure with a 1 and the day after the end with a -1 above. By
-  # adding the value of the previous cell to each cell we get 1s in every interval during which the patient is exposed )
-  X <- pmin( apply( X, 2, cumsum ), 1 )
+  X <- buildFeatureMatrix(
+    number_of_intervals = number_of_intervals,
+    number_of_features = summarize( feature_indeces, n = max( !!br_symbol$drug_number ) )$n,
+    interval_numbers = feature_indeces$interval_number,
+    feature_numbers = feature_indeces$drug_number,
+    flags = feature_indeces$event_flag )
 
   # Parameter tying determines the Z matrix
-  Z = switch( tying
+  Z <- switch( tying
               , occurrence = { # Occurence tying
 
                 start_intervals <- obs_start_events %>%

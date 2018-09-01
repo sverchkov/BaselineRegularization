@@ -16,6 +16,11 @@
 #' @author Zhaobin Kuang
 fitBaselineRegularization <- function( br_data, parameters = defineBRParameters() ){
 
+  if ( is.null( br_data ) )
+    stop ( flog.fatal("Attempted to run fitBaselineRegularization with bad input.") )
+  if ( is.null( br_data$X ) && is.list( br_data ) )
+    return ( lapply( br_data, fitBaselineRegularization, parameters ) )
+
   # Extract the following from brData:
   X <- br_data$X # Exposure matrix
   Z <- br_data$Z # Interval-to-baseline-parameter design matrix.

@@ -25,6 +25,7 @@ br_symbol <- {
     "event_day",
     "event_time",
     "interval_number",
+    "interval_length",
     "lead_interval",
     "merge_group",
     "merged_start_day",

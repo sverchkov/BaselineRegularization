@@ -43,9 +43,9 @@ getCoefficients <- function ( fit,
 
   # Try to join with names
   if ( !is.null( names_table ) )
-    result <- left_join( result, names_table, by = c( concept_id = deparse( id_sym ) ) )
+    result <-
+      left_join( result, names_table, by = c( concept_id = deparse( id_sym ) ) ) %>%
+      select( !!br_symbol$Beta, !!br_symbol$concept_id, `Drug Name` = !!name_sym )
 
-  # Result
-  select( result, !!br_symbol$Beta, !!br_symbol$concept_id, `Drug Name` = !!name_var )
-
+  return ( result )
 }
