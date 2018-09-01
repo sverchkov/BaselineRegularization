@@ -1,6 +1,7 @@
 ---
-title: 'Baseline Regularization'
+title: "Baseline Regularization"
 author: "Yuriy Sverchkov"
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Baseline Regularization}
