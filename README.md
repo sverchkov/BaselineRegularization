@@ -7,12 +7,26 @@ BaselineRegularization
 Introduction
 ------------
 
-Features
---------
+### Installation
 
-Example
--------
+The package can be installed from github with
+
 ```r
+devtools::install_github("sverchkov/BaselineRegularization", build_vignettes = TRUE)
+```
+
+### Tutorial
+
+The R vignettes include a tutorial that covers most features of the package, these can be accessed with
+```r
+browseVignettes("BaselineRegularization")
+```
+
+### Example
+
+```r
+# Load the package
+library("BaselineRegularization")
 
 # Connect to Database, e.g. postgres [1]
 con <- DBI::dbConnect( RPostgreSQL::PostgreSQL()
@@ -25,7 +39,7 @@ con <- DBI::dbConnect( RPostgreSQL::PostgreSQL()
 event = 4110956 # The concept_id for "Acute myocardial infarction NOS"
 
 # Extract relevant data
-br_data <- prepareBRDataFromOccurrence( con, response_event <- event )
+br_data <- prepareBRData( con, response_event = event )
 
 # Parametrize task
 parameters <- defineBRParameters()
@@ -56,18 +70,8 @@ Dependencies
  * dplyr (Version 0.7.5 or greater)
  * glmnet
  * Matrix
- 
-Getting Started
----------------
 
-### Installation
-The package can be installed from github with
-```r
-devtools::install_github("sverchkov/BaselineRegularization")
-```
-
-Getting Involved
-----------------
+* We use the [GitHub issue tracker](https://github.com/sverchkov/BaselineRegularization/issues) for bugs and feature requests
 
 License
 -------

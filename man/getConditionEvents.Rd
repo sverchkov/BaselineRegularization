@@ -5,7 +5,7 @@
 \title{Get condition events from a condition occurrence/era table and an observation period table}
 \usage{
 getConditionEvents(condition, observation_period,
-  date_column = !(!as.symbol("condition_start_date")))
+  date_column = !!br_symbol$condition_start_date)
 }
 \arguments{
 \item{condition}{the condition occurrence or condition era table}

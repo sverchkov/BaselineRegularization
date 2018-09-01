@@ -8,6 +8,7 @@
 #' these), using non-standard evaluation
 #' @param time_match regular expression to match to columns that correspond to event times
 #' @return a table with three columns: patient_id, observation_period_start, observation_period_end
+#' @importFrom rlang !!
 #' @import dplyr
 inferObservationPeriods <- function ( ...
                                     , patient_id = patient_id
@@ -49,7 +50,7 @@ inferObservationPeriods <- function ( ...
 
   result %>% group_by( `!!`(ptid) ) %>%
     summarize(
-      observation_period_start_date = min( event_time, na.rm = T ),
-      observation_period_end_date = max( event_time, na.rm = T ) ) %>%
+      observation_period_start_date = min( !!br_symbol$event_time, na.rm = T ),
+      observation_period_end_date = max( !!br_symbol$event_time, na.rm = T ) ) %>%
     ungroup()
 }

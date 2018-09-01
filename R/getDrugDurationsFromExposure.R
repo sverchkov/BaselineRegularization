@@ -8,23 +8,21 @@
 #' @param observation_period A dataframe-like object corresponding to the OMOP CDM `observation_period` table
 #'
 #' @author Yuriy Sverchkov
-#' @importFrom rlang .data
 #' @import dplyr
-#' @import futile.logger
 getDrugDurationsFromExposure <- function ( drug_exposure, observation_period )
 {
   # Result
   inner_join( drug_exposure, observation_period, by = "person_id" ) %>%
-    mutate( drug_start_day = as.integer( drug_exposure_start_date - observation_period_start_date ) ) %>%
-    filter( drug_start_day >= 0, drug_start_day <= observation_period_length ) %>%
-    transmute( observation_period_id,
-               observation_period_length,
-                     concept_id = drug_concept_id,
-               drug_start_day,
-                     drug_end_day =
-                       1L + drug_start_day +
-                       if_else( is.na( drug_exposure_end_date ),
-                                if_else( is.na( days_supply ), 0L, days_supply ),
-                                as.integer( drug_exposure_end_date - drug_exposure_start_date ) )
+    mutate( drug_start_day = as.integer( !!br_symbol$drug_exposure_start_date - !!br_symbol$observation_period_start_date ) ) %>%
+    filter( !!br_symbol$drug_start_day >= 0, !!br_symbol$drug_start_day <= !!br_symbol$observation_period_length ) %>%
+    transmute( !!br_symbol$observation_period_id,
+               !!br_symbol$observation_period_length,
+               concept_id = !!br_symbol$drug_concept_id,
+               !!br_symbol$drug_start_day,
+               drug_end_day =
+                       1L + !!br_symbol$drug_start_day +
+                       if_else( is.na( !!br_symbol$drug_exposure_end_date ),
+                                if_else( is.na( !!br_symbol$days_supply ), 0L, !!br_symbol$days_supply ),
+                                as.integer( !!br_symbol$drug_exposure_end_date - !!br_symbol$drug_exposure_start_date ) )
     )
 }

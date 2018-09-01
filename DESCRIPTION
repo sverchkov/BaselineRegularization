@@ -1,14 +1,16 @@
 Package: BaselineRegularization
 Title: Baseline Regularization
-Version: 0.0.1
+Version: 0.0.99
 Authors@R: c(
   person("Yuriy", "Sverchkov", email = "yuriy.sverchkov@wisc.edu", role = c("aut", "cre")),
   person("Charles", "Kwong", email = "zhaobin.kuang@gmail.com", role = "aut" ) )
 Description: Implementation of Baseline Regularization by Zhaobin et al. (KDD 2017) targeted to work with OMOP databases.
-Depends: R (>= 3.0.0)
 License: file LICENSE
+URL: https://github.com/sverchkov/BaselineRegularization
+BugReports: https://github.com/sverchkov/BaselineRegularization/issues
 Encoding: UTF-8
 LazyData: true
+Depends: R (>= 3.0.0)
 Imports:
   rlang (>= 0.2),
   Matrix (>= 1.2),
@@ -21,5 +23,8 @@ Suggests:
   DBI (>= 1.0.0),
   dbplyr (>= 1.2),
   RPostgreSQL (>= 0.6),
-  RSQLite (>= 2.1)
-RoxygenNote: 6.0.1
+  RSQLite (>= 2.1),
+  knitr,
+  rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 6.1.0
