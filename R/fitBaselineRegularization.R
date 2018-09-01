@@ -90,7 +90,7 @@ fitBaselineRegularization <- function( br_data, parameters = defineBRParameters(
         mdlBeta <- glmnet::glmnet( x=X, y=brBetaResponse, family="gaussian",
                                    weights = brBetaWeights, alpha=0, lambda=lam1*c(100,10,1),
                                    intercept=FALSE, thresh = 1e-8, standardize=FALSE);
-        beta <- mdlBeta$beta[,3];
+        beta <- Matrix( mdlBeta$beta[,3] );
         rm(mdlBeta);
       }
 
