@@ -7,6 +7,8 @@
 #' @param out_column The column to which to write the processor result
 #' @return `record_table` with `out_column` added, being a copy of `record_table_column`
 #'
+#' @importFrom rlang :=
+#' @importFrom rlang !!
 #' @import dplyr
 passthroughConceptProcessor <- function (
   record_table,

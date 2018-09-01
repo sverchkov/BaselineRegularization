@@ -8,6 +8,7 @@
 #' these), using non-standard evaluation
 #' @param time_match regular expression to match to columns that correspond to event times
 #' @return a table with three columns: patient_id, observation_period_start, observation_period_end
+#' @importFrom rlang !!
 #' @import dplyr
 inferObservationPeriods <- function ( ...
                                     , patient_id = patient_id
