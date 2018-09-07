@@ -210,7 +210,9 @@ Next, construct a processor for condition concept IDs:
 ```{r make condition processor, eval = FALSE}
 condition_concept_processor <- ancestorConceptProcessor(
   concept_ancestor = omop_hoi_conditions_map,
-  concept_list = 501L:510L )
+  concept_list = 501L:510L,
+  ancestor_column = "hoi_id", # Note that ompo_hoi_conditions map uses custom column names
+  descendant_column = "condition_concept_id" )
 ```
 Simply add the processor to the data preparation call:
 ```{r run with omop conditions, eval=FALSE}
