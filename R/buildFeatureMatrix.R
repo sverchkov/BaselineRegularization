@@ -13,24 +13,29 @@
 buildFeatureMatrix <- function ( number_of_intervals, number_of_features, interval_numbers, feature_numbers, flags ) {
 
   number_of_intervals <- as.integer( number_of_intervals )
-  if ( length( number_of_intervals ) != 1 )
-    flog.error( "Non-singleton 'number of intervals' passed to buildFeatureMatrix." )
+  if ( length( number_of_intervals ) != 1 ){
+    stop( flog.error( "Non-scalar 'number of intervals' passed to buildFeatureMatrix." ) )
+  }
 
   number_of_features <- as.integer( number_of_features )
-  if ( length( number_of_intervals ) != 1 )
-    flog.error( "Non-singleton 'number of features' passed to buildFeatureMatrix." )
+  if ( length( number_of_intervals ) != 1 ){
+    stop(flog.error( "Non-scalar 'number of features' passed to buildFeatureMatrix." ) )
+  }
 
   interval_numbers <- as.integer( interval_numbers )
-  if ( any( interval_numbers > number_of_intervals ) )
-    flog.error( "Feature matrix interval numbers out of bounds" )
+  if ( any( interval_numbers > number_of_intervals ) ){
+    stop( flog.error( "Feature matrix interval numbers out of bounds" ) )
+  }
 
   feature_numbers <- as.integer( feature_numbers )
-  if ( any( feature_numbers > number_of_features ) )
-    flog.error( "Feature matrix feature numbers out of bounds" )
+  if ( any( feature_numbers > number_of_features ) ){
+    stop( flog.error( "Feature matrix feature numbers out of bounds" ) )
+  }
 
   flags <- as.integer( flags )
-  if ( length( interval_numbers ) != length( feature_numbers ) || length( feature_numbers ) != length( flags ) )
-    flog.error( "Array length mismatch in input to buildFeatureMatrix.")
+  if ( length( interval_numbers ) != length( feature_numbers ) || length( feature_numbers ) != length( flags ) ){
+    stop( flog.error( "Array length mismatch in input to buildFeatureMatrix." ) )
+  }
 
   flog.trace( "%s intervals, %s features, %s events.", number_of_intervals, number_of_features, length( flags ) )
 
