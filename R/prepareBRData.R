@@ -142,7 +142,7 @@ prepareBRData <- function ( con = NULL
 
   if ( length( response_event ) > 1 ) {
     flog.debug( "Got multiple response_event values, will produce a list of multiple data objects." )
-    return ( results )
+    return ( results[ !sapply( results, is.null ) ] )
   } else {
     return ( results[[1]] )
   }
