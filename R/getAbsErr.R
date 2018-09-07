@@ -18,11 +18,12 @@ getAbsErr = function( a, b ){
   d1 <- dim( oldVec )
   d2 <- dim( newVec )
   if( any( d1 != d2 ) ){
-    flog.error( "Trying to compare vectors of different size! (%s and %s)",
+    flog.error( "Trying to compare vectors of different dimensions! (%s and %s)",
                 deparse( enexpr( a ) ),
                 deparse( enexpr( b ) ) )
     flog.error( "Dimensions of first argument:", d1, capture = T )
     flog.error( "Dimensions of second argument:", d2, capture = T )
+    stop( "Tried to compare vectors of different dimensions." )
   }
 
   relErr = norm(oldVec-newVec,type="F");
