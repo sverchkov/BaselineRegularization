@@ -51,11 +51,13 @@ checkKKT4BR = function(Z,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda
   } ) )
 
   # err from beta
+  if( any( grad_beta == Inf ) ) {
+    flog.warn( "Infinite beta gradient computed." )
+    return ( Inf )
+  }
+
   err <- c(err, norm(grad_beta,type="2"))
   err <- norm(err,type="2")
 
   return(err)
-
-
-
 }

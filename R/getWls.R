@@ -17,10 +17,12 @@
 #'
 getWls = function(y,X,w,lambda,thresh=1e-7){
 
-  mdl = glmnet(x=X,y=y,alpha=0,family="gaussian",weights=w,
-               lambda=lambda*sqrt(sum(w*(y-sum(w/sum(w)*y))^2)/(sum(w))),
+  multiplier <- sqrt( sum( w*( y-sum( w/sum(w)*y ) )^2 ) / ( sum(w) ) )
+
+  mdl = glmnet::glmnet(x=X,y=y,alpha=0,family="gaussian",weights=w,
+               lambda=2:1 * lambda*multiplier, # glmnet doesn't like getting 1 lambda
                standardize=FALSE,intercept=FALSE,thresh=thresh)
-  beta = mdl$beta
+  beta = mdl$beta[,2]
 
   return(beta)
 }

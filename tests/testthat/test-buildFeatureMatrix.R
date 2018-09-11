@@ -1,8 +1,5 @@
 context("Feature Matrix Builder Helper")
 
-# Silence futile.logger
-futile.logger::flog.threshold( FATAL )
-
 # Load data
 load( system.file("testdata", "bfmparams.RData", package="BaselineRegularization", mustWork = T) )
 

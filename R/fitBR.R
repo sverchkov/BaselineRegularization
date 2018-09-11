@@ -74,23 +74,37 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
     betaTilde = beta
     workingResponse = z-Z%*%tTilde
 
+    if ( errOuter == Inf ){
+      flog.trace( "beta:", beta, capture = T )
+      flog.trace( "Z*t:", Z%*%t, capture = T )
+      flog.trace( "X*beta:", X%*%beta, capture = T )
+      flog.trace( "log_s:", log_s, capture = T )
+      flog.trace( "w:", w, capture = T )
+      flog.trace( "workingResponse:", workingResponse, capture = T )
+    }
+
     # inner loop
     repeat{
 
       # beta step
-      betaTilde = getWls(y=workingResponse,X=X,w=w,lambda=lambda1*sum(l)/sum(w),thresh=1e-20)
+      #tryCatch(
+      betaTilde <- getWls(y=workingResponse,X=X,w=w,lambda=lambda1*sum(l)/sum(w),thresh=1e-20)
+      #, function(e) error( str(e) ) )
 
       # t step
-      omega = data.table(indx=D$baselineIndx,w=w)[,sum(w),by="indx"]$V1+lambda3
-      nu = data.table(indx=D$baselineIndx,
-        val=w*as.numeric(z-X%*%betaTilde))[,sum(val),by="indx"]$V1/omega
-      tTilde = bwflsa(indx=baseline$patientId,y=nu, w=omega, lambda=lambda2*nBaselineDiff)
+      omega <- w%*%Z + lambda3
+
+      nu <- ( t( w * ( z - X %*% betaTilde ) ) %*% Z ) / omega
+
+      tTilde = blockwiseWeightedFusedLassoSignalApproximator(indx = baseline_obs_period, y=nu, w=omega, lambda = lambda2 * n_baseline_diff )
 
       # check inner loop optimality
       workingResponse = z-Z%*%tTilde
-      errInner = checkKktBetaStep(y=workingResponse,X=X,w=w,beta=betaTilde,l=l,lambda=lambda1)
+      errInner = checkKKT4BetaStep(y=workingResponse,X=X,w=w,beta=betaTilde,l=l,lambda=lambda1)
 
       flog.trace( "Inner Loop Error: %16.8f", errInner )
+
+      flog.trace( "Beta~:", betaTilde, capture = T )
 
       if(errInner<1e-6){
         beta = betaTilde
