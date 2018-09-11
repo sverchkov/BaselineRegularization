@@ -30,7 +30,12 @@ checkKKT4MSCCS = function(Z,X,y,w,lambda,alpha,beta){
       rep(yWeightSum,times=as.numeric(colSums(Z))))/sum(w)
   betaOpt = (likeStat/beta)-lambda
 
-  err = norm(rbind(alphaOpt,betaOpt),type="2")
+  vector <- rbind(alphaOpt,betaOpt)
+  if ( any( is.infinite( vector ) ) ) {
+    flog.trace("msccs optimality violation vector:", vector, capture = T )
+    return ( Inf )
+  }
+  err = norm( vector,type="2")
   return(err)
 }
 

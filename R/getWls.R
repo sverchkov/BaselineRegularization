@@ -13,16 +13,22 @@
 #'
 #' @return beta the regression coefficient
 #'
-#' @export
-#'
+#' @author Zhaobin Kuang
 getWls = function(y,X,w,lambda,thresh=1e-7){
 
-  multiplier <- sqrt( sum( w*( y-sum( w/sum(w)*y ) )^2 ) / ( sum(w) ) )
+  # multiplier <- sqrt( sum( w*( y-sum( w/sum(w)*y ) )^2 ) / ( sum(w) ) )
+  multiplier <- sqrt( weighted.mean( ( y - weighted.mean( y, w ) )^2, w ) )
+
+  if ( is.nan( multiplier ) ){
+    flog.trace( "getWls lambda: %s, multiplier: %s, result: %s", lambda, multiplier, lambda*multiplier )
+    flog.trace( "y", y, capture = T )
+    flog.trace( "w", w, capture = T )
+  }
 
   mdl = glmnet::glmnet(x=X,y=y,alpha=0,family="gaussian",weights=w,
-               lambda=2:1 * lambda*multiplier, # glmnet doesn't like getting 1 lambda
+               lambda=lambda*multiplier,
                standardize=FALSE,intercept=FALSE,thresh=thresh)
-  beta = mdl$beta[,2]
+  beta = mdl$beta
 
   return(beta)
 }

@@ -81,20 +81,24 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
       flog.trace( "log_s:", log_s, capture = T )
       flog.trace( "w:", w, capture = T )
       flog.trace( "workingResponse:", workingResponse, capture = T )
+      flog.trace( "z", z, capture = T )
+      flog.trace( "sum(l) = %s, sum(w) = %s", sum(l), sum(w) )
+      #big_number <- .Machine$double.xmax
+      #flog.warn( "Reducing infinities to %s", big_number )
+      #workingResponse[ workingResponse == Inf ] <- big_number
     }
+
+    omega <- w%*%Z + 2*lambda3
 
     # inner loop
     repeat{
 
       # beta step
-      #tryCatch(
       betaTilde <- getWls(y=workingResponse,X=X,w=w,lambda=lambda1*sum(l)/sum(w),thresh=1e-20)
-      #, function(e) error( str(e) ) )
 
       # t step
-      omega <- w%*%Z + lambda3
-
       nu <- ( t( w * ( z - X %*% betaTilde ) ) %*% Z ) / omega
+      flog.trace( "nu?", nu, capture = T )
 
       tTilde = blockwiseWeightedFusedLassoSignalApproximator(indx = baseline_obs_period, y=nu, w=omega, lambda = lambda2 * n_baseline_diff )
 
