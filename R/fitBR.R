@@ -32,12 +32,10 @@
 #' @author Zhaobin Kuang
 fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
 
-  ## NOTES:
-  ## D - rows are intervals
-  ## D$patientId column - our segIdx column
-  ## D$baselineIndx - indicates how intervals are tied (captured by Z as well)
-  # helper data structure
-  # baseline = unique(D[,c("patientId","baselineIndx")])
+  max_outer_loop_iterations <- 1000
+  max_inner_loop_iterations <- 1000
+  outer_err_threshold <- 1e-6
+  inner_err_threshold <- 1e-6
 
   # Interval grouping by baseline parameters, using which.max to get around "argument is not logical"
   interval_baseline <- apply( Z, 1, which.max )
@@ -60,20 +58,20 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
   flog.trace("Starting BR optimization loop...")
 
   # outer loop
-  repeat{
+  for( outer_loop_iteration in 1: max_outer_loop_iterations ){
 
-    errOuter <- checkKKT4BR(Z,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda3)
-    flog.trace( "Outer Loop Error: %20.8f", errOuter )
-    if ( 1e-6 > errOuter ) break
+    outer_err <- checkKKT4BR(Z,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda3)
+    flog.trace( "Outer Loop Iteration %4d Error: %20.8f", outer_loop_iteration, outer_err )
+    if ( outer_err_threshold > outer_err ) break
 
-    log_s = as.numeric(Z%*%t+X%*%beta)
-    w = exp(log(l)+log_s)
-    z = as.numeric(log_s + n/(w) - 1)
-    tTilde = t
-    betaTilde = beta
-    workingResponse = z-Z%*%tTilde
+    log_s <- as.numeric(Z%*%t+X%*%beta)
+    w <- exp(log(l)+log_s)
+    z <- as.numeric(log_s + n/(w) - 1)
+    tTilde <- t
+    betaTilde <- beta
+    workingResponse <- z-Z%*%tTilde
 
-    if ( errOuter == Inf ){
+    if ( outer_err == Inf ){
       flog.trace( "beta:", beta, capture = T )
       flog.trace( "Z*t:", Z%*%t, capture = T )
       flog.trace( "X*beta:", X%*%beta, capture = T )
@@ -90,7 +88,7 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
     omega <- w%*%Z + 2*lambda3
 
     # inner loop
-    repeat{
+    for( inner_loop_iteration in 1:max_inner_loop_iterations ){
 
       # beta step
       betaTilde <- getWls( y=workingResponse, X=X, w=w, lambda=lambda1*sum(l)/sum(w), thresh=1e-20)
@@ -103,22 +101,23 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
 
       # check inner loop optimality
       workingResponse = z-Z%*%tTilde
-      errInner = checkKKT4BetaStep(y=workingResponse,X=X,w=w,beta=betaTilde,l=l,lambda=lambda1)
+      inner_err = checkKKT4BetaStep(y=workingResponse,X=X,w=w,beta=betaTilde,l=l,lambda=lambda1)
 
-      flog.trace( "Inner Loop Error: %16.8f", errInner )
+      flog.trace( "Inner Loop Iteration %4d Error: %16.8f", inner_loop_iteration, inner_err )
 
       flog.trace( "Beta~:", betaTilde, capture = T )
 
-      if(errInner<1e-6){
-        beta = betaTilde
-        t = tTilde
+      if ( inner_err < inner_err_threshold ){
+        beta <- betaTilde
+        t <- tTilde
         break
       }
     }
   }
   flog.trace( "BR converged.")
 
-  return( list( t=t, beta=beta, err=errOuter, msccs_t = msccs_t, msccs_beta = msccs_beta ) )
+  return( list( t=t, beta=beta, err=outer_err
+           , msccs_t = msccs_t, msccs_beta = msccs_beta ) )
 }
 
 
