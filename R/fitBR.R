@@ -54,9 +54,8 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
   # Use MSCCS to initialize baseline parameters
   model_0 <- fitMSCCS(interval_obs_period,X,l,n,lambda=lambda1,threshold=1e-7)
 
-  t <- model_0$alpha[baseline_obs_period]
-
-  beta = numeric( ncol(X) )
+  t <- msccs_t <- model_0$alpha[baseline_obs_period]
+  beta <- msccs_beta <- model_0$beta
 
   flog.trace("Starting BR optimization loop...")
 
@@ -94,7 +93,7 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
     repeat{
 
       # beta step
-      betaTilde <- getWls(y=workingResponse,X=X,w=w,lambda=lambda1*sum(l)/sum(w),thresh=1e-20)
+      betaTilde <- getWls( y=workingResponse, X=X, w=w, lambda=lambda1*sum(l)/sum(w), thresh=1e-20)
 
       # t step
       nu <- ( t( w * ( z - X %*% betaTilde ) ) %*% Z ) / omega
@@ -119,7 +118,7 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
   }
   flog.trace( "BR converged.")
 
-  return(list(t=t,beta=beta,err=errOuter))
+  return( list( t=t, beta=beta, err=errOuter, msccs_t = msccs_t, msccs_beta = msccs_beta ) )
 }
 
 
