@@ -21,7 +21,7 @@ fitBaselineRegularization <- function( br_data, parameters = defineBRParameters(
     return ( lapply( br_data, fitBaselineRegularization, parameters ) )
 
   result <- fitBR(
-    Z = br_data$X,
+    Z = br_data$Z,
     interval_obs_period = br_data$patients,
     X = br_data$X,
     l = br_data$l,
