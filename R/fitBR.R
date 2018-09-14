@@ -52,72 +52,62 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
   # Use MSCCS to initialize baseline parameters
   model_0 <- fitMSCCS(interval_obs_period,X,l,n,lambda=lambda1,threshold=1e-7)
 
-  t <- msccs_t <- model_0$alpha[baseline_obs_period]
-  beta <- msccs_beta <- model_0$beta
+  t <- model_0$alpha[baseline_obs_period]
+  beta <- model_0$beta
 
   flog.trace("Starting BR optimization loop...")
 
   # outer loop
-  for( outer_loop_iteration in 1: max_outer_loop_iterations ){
+  for ( outer_loop_iteration in 1: max_outer_loop_iterations ) {
 
     outer_err <- checkKKT4BR(Z,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda3)
     flog.trace( "Outer Loop Iteration %4d Error: %20.8f", outer_loop_iteration, outer_err )
     if ( outer_err_threshold > outer_err ) break
 
-    log_s <- as.numeric(Z%*%t+X%*%beta)
-    w <- exp(log(l)+log_s)
-    z <- as.numeric(log_s + n/(w) - 1)
+    log_s <- as.numeric( Z %*% t + X %*% beta )
+    w <- exp( log(l) + log_s ) # Weight vector. of length # of intervals
+    z <- as.numeric( log_s + n / (w) - 1 )
     tTilde <- t
     betaTilde <- beta
-    workingResponse <- z-Z%*%tTilde
 
-    if ( outer_err == Inf ){
-      flog.trace( "beta:", beta, capture = T )
-      flog.trace( "Z*t:", Z%*%t, capture = T )
-      flog.trace( "X*beta:", X%*%beta, capture = T )
-      flog.trace( "log_s:", log_s, capture = T )
-      flog.trace( "w:", w, capture = T )
-      flog.trace( "workingResponse:", workingResponse, capture = T )
-      flog.trace( "z", z, capture = T )
-      flog.trace( "sum(l) = %s, sum(w) = %s", sum(l), sum(w) )
-      #big_number <- .Machine$double.xmax
-      #flog.warn( "Reducing infinities to %s", big_number )
-      #workingResponse[ workingResponse == Inf ] <- big_number
-    }
-
-    omega <- w%*%Z + 2*lambda3
+    omega <- w %*% Z + 2*lambda3
 
     # inner loop
     for( inner_loop_iteration in 1:max_inner_loop_iterations ){
 
+      workingResponse <- z - Z %*% tTilde
+
+      if ( inner_loop_iteration > 1 ) {
+        # check inner loop optimality
+        inner_err <- checkKKT4BetaStep(y=workingResponse,X=X,w=w,beta=betaTilde,l=l,lambda=lambda1)
+
+        flog.trace( "Inner Loop Iteration %4d Error: %16.8f", inner_loop_iteration, inner_err )
+
+        if ( inner_err < inner_err_threshold ){
+          beta <- betaTilde
+          t <- tTilde
+          break
+        }
+      }
+
       # beta step
       betaTilde <- getWls( y=workingResponse, X=X, w=w, lambda=lambda1*sum(l)/sum(w), thresh=1e-20)
+      # ^ lambda is scaled by total interval length divided (why?) by the sum of weights
 
       # t step
-      nu <- ( t( w * ( z - X %*% betaTilde ) ) %*% Z ) / omega
-      flog.trace( "nu?", nu, capture = T )
+      nu <- ( t( Z ) %*% ( w * ( z - X %*% betaTilde ) ) ) / t( omega )
 
-      tTilde = blockwiseWeightedFusedLassoSignalApproximator(indx = baseline_obs_period, y=nu, w=omega, lambda = lambda2 * n_baseline_diff )
-
-      # check inner loop optimality
-      workingResponse = z-Z%*%tTilde
-      inner_err = checkKKT4BetaStep(y=workingResponse,X=X,w=w,beta=betaTilde,l=l,lambda=lambda1)
-
-      flog.trace( "Inner Loop Iteration %4d Error: %16.8f", inner_loop_iteration, inner_err )
-
-      flog.trace( "Beta~:", betaTilde, capture = T )
-
-      if ( inner_err < inner_err_threshold ){
-        beta <- betaTilde
-        t <- tTilde
-        break
-      }
+      tTilde <- blockwiseWeightedFusedLassoSignalApproximator(
+        indx = baseline_obs_period,
+        y=nu,
+        w=omega,
+        lambda = lambda2 * n_baseline_diff ) # lambda is scaled by # of baseline parameter adjacencies
     }
   }
   flog.trace( "BR converged.")
 
-  return( list( t=t, beta=beta, err=outer_err
-           , msccs_t = msccs_t, msccs_beta = msccs_beta ) )
+  return( list( t=t, beta=beta, err=outer_err,
+                msccs_model = model_0 ) )
 }
 
 

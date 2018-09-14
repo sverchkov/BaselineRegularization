@@ -30,5 +30,5 @@ fitBaselineRegularization <- function( br_data, parameters = defineBRParameters(
     lambda2 = parameters$lambda2,
     lambda3 = parameters$lambda3 )
 
-  list( beta = result$beta, t = result$t, err=res$err, parameters = parameters, drug_concept_id = br_data$drug_concept_id, response_event = br_data$response_event )
+  c( result, list(parameters = parameters, drug_concept_id = br_data$drug_concept_id, response_event = br_data$response_event ) )
 }

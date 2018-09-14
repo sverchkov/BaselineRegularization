@@ -40,7 +40,7 @@ fitMSCCS = function(obs_group,X,l,n,lambda,threshold=1e-7){
   y <- y[keep]
 
   # Make X to match y
-  X <- X[indx,]
+  X <- Matrix( X[indx,] ) # ensure this is a matrix in case there's only obs period.
   Z <- sparseMatrix(i = 1:length(indx), j = obs_group[indx] )
 
   # learn MSCCS

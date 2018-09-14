@@ -16,7 +16,15 @@
 #' @author Zhaobin Kuang
 getWls = function(y,X,w,lambda,thresh=1e-7){
 
-  # multiplier <- sqrt( sum( w*( y-sum( w/sum(w)*y ) )^2 ) / ( sum(w) ) )
+  # Check for infinite weights
+  if ( any( inf_w <- is.infinite( w ) ) ){
+    flog.warn( "Infinite weights found, dropping other weights and doing unweighted regression." )
+    w <- sign( w[ inf_w ] )
+    y <- y[ inf_w ]
+    X <- X[ inf_w, ]
+  }
+
+  #multiplier <- 1
   multiplier <- sqrt( weighted.mean( ( y - weighted.mean( y, w ) )^2, w ) )
 
   if ( is.nan( multiplier ) ){
@@ -25,10 +33,15 @@ getWls = function(y,X,w,lambda,thresh=1e-7){
     flog.trace( "w", w, capture = T )
   }
 
-  mdl = glmnet::glmnet(x=X,y=y,alpha=0,family="gaussian",weights=w,
-               lambda=lambda*multiplier,
-               standardize=FALSE,intercept=FALSE,thresh=thresh)
-  beta = mdl$beta
+  if ( any( is.infinite( y ) ) ) flog.trace( "y", y, capture = T )
+  if ( any( is.infinite( w ) ) ) flog.trace( "y", w, capture = T )
 
-  return(beta)
+  lambda_seq <- lambda * multiplier * c( 50, 20, 7, 2, 1 )
+
+  mdl = glmnet::glmnet(x=X,y=y,alpha=0,family="gaussian",weights=w,
+               lambda=lambda_seq,
+               standardize=FALSE,intercept=FALSE,thresh=thresh)
+  beta = mdl$beta[,length(lambda_seq)]
+
+  return ( Matrix( beta ) )
 }

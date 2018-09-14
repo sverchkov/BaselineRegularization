@@ -44,7 +44,7 @@ checkKKT4BR = function(Z,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda
     if ( length( baseline_indx ) > 1 ){ # more than one interval per observation period: fused err
       subgradient <- getFusedSubgradient( grad_t[baseline_indx], lambda2*nBaselineDiff )
       sgn <- sign( diff( t[baseline_indx] ) )
-      checkL1Optimality( subgradient, sign )
+      checkL1Optimality( subgradient, sgn )
     } else if ( length( baseline_indx ) == 1 ) { # single interval per observation period: gradient err
       grad_t[ baseline_indx ]
     } else numeric( 0 ) # shouldn't even happen
