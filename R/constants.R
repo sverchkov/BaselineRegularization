@@ -4,6 +4,8 @@
 br_symbol <- {
   nam <- c(
     "Beta",
+    "baseline_parameter",
+    "bp_inc",
     "ancestor_concept_id",
     "break_point",
     "concept_id",

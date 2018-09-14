@@ -80,7 +80,31 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
   )$n_intervals )
 
   # Interval lengths
-  interval_details <- event_times %>% select( !!br_symbol$interval_length, !!br_symbol$obs_period ) %>% collect()
+  interval_details <- event_times %>% select( !!br_symbol$interval_number, !!br_symbol$interval_length, !!br_symbol$obs_period )
+
+  # Parameter tying
+  interval_details <- switch(
+    tying,
+    occurrence = { # Occurence tying
+
+      start_intervals <- obs_start_events %>%
+        # Get interval numbers
+        inner_join( event_times, by = c( obs_period = "obs_period", event_day = "event_day" ) ) %>%
+        # We only need interval numbers
+        select( !!br_symbol$interval_number )
+
+      # Baseline parameter numbering
+      bp_numbers <- ade_intervals %>% union( start_intervals ) %>%
+        mutate( bp_inc = 1L ) %>%
+        right_join( interval_details, by = "interval_number" ) %>%
+        mutate( if_else( is.na( !!br_symbol$bp_inc ), 0L, !!br_symbol$bp_inc ) ) %>%
+        arrange( !!br_symbol$interval_number ) %>%
+        mutate( baseline_parameter = cumsum( !!br_symbol$bp_inc ) ) %>%
+        select( -!!br_symbol$bp_inc )
+    },
+    interval = mutate( interval_details, baseline_parameter = !!br_symbol$interval_number ), # Interval tying
+    msccs = mutate( interval_details, baseline_parameter = !!br_symbol$obs_period )
+    ) %>% collect()
 
   # Build feature matrix
 
@@ -100,42 +124,16 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
     feature_numbers = feature_indeces$drug_number,
     flags = feature_indeces$event_flag )
 
-  # Parameter tying determines the Z matrix
-  Z <- switch( tying
-              , occurrence = { # Occurence tying
-
-                start_intervals <- obs_start_events %>%
-                  # Get interval numbers
-                  inner_join( event_times, by = c( obs_period = "obs_period", event_day = "event_day" ) ) %>%
-                  # We only need interval numbers
-                  select( !!br_symbol$interval_number )
-
-                # Sort by intervals
-                z_elements <- ade_intervals %>% union( start_intervals ) %>%
-                  arrange( !!br_symbol$interval_number ) %>%
-                  # Get distance to next break
-                  mutate( lead_interval = lead( !!br_symbol$interval_number ) ) %>%
-                  mutate( lead_interval = ifelse( is.na( !!br_symbol$lead_interval ),
-                                                  !!br_symbol$number_of_intervals+1L,
-                                                  !!br_symbol$lead_interval ) ) %>%
-                  mutate( tie_length = !!br_symbol$lead_interval - !!br_symbol$interval_number ) %>%
-                  collect()
-
-                # Make the diagonal matrix
-                bdiag( Map( function( x ) rep( 1, x ), z_elements$tie_length ) )
-              }
-              , interval = Diagonal( number_of_intervals ) ) # Interval tying
-
   # Get ade_intervals
   ade_intervals <- ade_intervals %>% collect()
 
   # Return
   list(
     X = X,
-    Z = Z,
+    interval_baseline_parameter = interval_details$baseline_parameter,
+    baseline_parameter_obs_period = distinct( interval_details, !!br_symbol$baseline_parameter, .keep_all = T )$obs_period ,
     l = as.numeric( interval_details$interval_length ), # Conversion to numeric from difftime
     n = as.vector( sparseVector( x = 1, i = ade_intervals$interval_number, length = number_of_intervals ) ),
-    patients = interval_details$obs_period,
     drug_concept_id = drug_concept_id,
     response_event = event
   )
