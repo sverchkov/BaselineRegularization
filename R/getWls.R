@@ -16,31 +16,24 @@
 #' @author Zhaobin Kuang
 getWls = function(y,X,w,lambda,thresh=1e-7){
 
-  # Check for infinite weights
-  if ( any( inf_w <- is.infinite( w ) ) ){
-    flog.warn( "Infinite weights found, dropping other weights and doing unweighted regression." )
-    w <- sign( w[ inf_w ] )
-    y <- y[ inf_w ]
-    X <- X[ inf_w, ]
-  }
-
-  #multiplier <- 1
   multiplier <- sqrt( weighted.mean( ( y - weighted.mean( y, w ) )^2, w ) )
-
-  if ( is.nan( multiplier ) ){
-    flog.trace( "getWls lambda: %s, multiplier: %s, result: %s", lambda, multiplier, lambda*multiplier )
-    flog.trace( "y", y, capture = T )
-    flog.trace( "w", w, capture = T )
-  }
-
-  if ( any( is.infinite( y ) ) ) flog.trace( "y", y, capture = T )
-  if ( any( is.infinite( w ) ) ) flog.trace( "y", w, capture = T )
 
   lambda_seq <- lambda * multiplier * c( 50, 20, 7, 2, 1 )
 
-  mdl = glmnet::glmnet(x=X,y=y,alpha=0,family="gaussian",weights=w,
-               lambda=lambda_seq,
-               standardize=FALSE,intercept=FALSE,thresh=thresh)
+  tryCatch({
+    mdl = glmnet::glmnet(x=X,y=y,alpha=0,family="gaussian",weights=w,
+                 lambda=lambda_seq,
+                 standardize=FALSE,intercept=FALSE,thresh=thresh)
+  }, error = function ( e ) {
+    flog.error( "glmnet crashed." )
+    flog.debug( str( e ) )
+    flog.debug( "y = ", y, capture = T )
+    flog.trace( "X = ", X, capture = T )
+    flog.debug( "w = ", w, capture = T )
+    flog.debug( "lambda = %s, multiplier = %s", lambda, multiplier )
+    stop( e )
+  } )
+
   beta = mdl$beta[,length(lambda_seq)]
 
   return ( Matrix( beta ) )

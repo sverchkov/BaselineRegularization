@@ -32,8 +32,8 @@
 #' @author Zhaobin Kuang
 fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
 
-  max_outer_loop_iterations <- 1000
-  max_inner_loop_iterations <- 1000
+  max_outer_loop_iterations <- 10000L
+  max_inner_loop_iterations <- 1000000L
   outer_err_threshold <- 1e-6
   inner_err_threshold <- 1e-6
 
@@ -55,17 +55,20 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
   t <- model_0$alpha[baseline_obs_period]
   beta <- model_0$beta
 
-  flog.trace("Starting BR optimization loop...")
+  flog.debug("Starting BR optimization loop...")
+
+  converged <- FALSE
 
   # outer loop
   for ( outer_loop_iteration in 1: max_outer_loop_iterations ) {
 
     outer_err <- checkKKT4BR(Z,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda3)
-    flog.trace( "Outer Loop Iteration %4d Error: %20.8f", outer_loop_iteration, outer_err )
-    if ( outer_err_threshold > outer_err ) break
+    flog.debug( "Outer Loop Iteration %4d Error: %20.8f", outer_loop_iteration, outer_err )
+    if ( converged <- ( outer_err_threshold > outer_err ) ) break
 
     log_s <- as.numeric( Z %*% t + X %*% beta )
     w <- exp( log(l) + log_s ) # Weight vector. of length # of intervals
+    w <- pmax( w, .Machine$double.xmin ) # Avoid crash due to 0 weights
     z <- as.numeric( log_s + n / (w) - 1 )
     tTilde <- t
     betaTilde <- beta
@@ -104,7 +107,11 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
         lambda = lambda2 * n_baseline_diff ) # lambda is scaled by # of baseline parameter adjacencies
     }
   }
-  flog.trace( "BR converged.")
+
+  if( converged )
+    flog.debug( "BR converged.")
+  else
+    flog.debug( "BR reached maximum iterations.")
 
   return( list( t=t, beta=beta, err=outer_err,
                 msccs_model = model_0 ) )
