@@ -2,36 +2,35 @@
 #'
 #' Fit Baseline Regularization
 #'
+#' @param interval_baseline_parameter An array where each position corresponds to an interval and each value
+#' corresponds to the index of a baseline parameter
+#' @param baseline_parameter_obs_period An array where each position corresponds to a baseline parameter and each
+#' value corresponds to the index of an observation period
 #' @export
 #' @import Matrix
 #' @import futile.logger
 #' @author Zhaobin Kuang
-fitBR <- function( br_data, parameters = defineBRParameters() ){
+fitBR <- function( interval_baseline_parameter, baseline_parameter_obs_period, X, l, n, lambda1, lambda2, lambda3, ... ){
 
-  if ( is.null( br_data ) )
-    stop ( flog.fatal("Attempted to run fitBaselineRegularization with bad input.") )
-  if ( is.null( br_data$X ) && is.list( br_data ) )
-    return ( lapply( br_data, fitBaselineRegularization, parameters ) )
+  dots <- list( ... )
+  max_outer_loop_iterations <- setIfNull( dots$max_outer_loop_iterations, 1000 )
+  max_inner_loop_iterations <- setIfNull( dots$max_inner_loop_iterations, 1000 )
 
-  # Extract the following from brData:
-  X <- br_data$X # Exposure matrix
-  Z <- br_data$Z # Interval-to-baseline-parameter design matrix.
-  l <- br_data$l # Interval durations
-  n <- br_data$n # # of adverse events in each interval
-  segIndx <- br_data$patients # For each segment indicates which patient it matches
+  ## Note:
+  # What is mathematically Z %*% v for vector v can be replaced by v[interval_baseline_parameter]
+  # Similarly, t(Z) %*% v becomes sumBy( v, interval_baseline_parameter )
 
   # Determine the number of baseline parameters
-  n_t <- ncol(Z)
+  n_t <- length( baseline_parameter_obs_period )
+
   # Determine the number of beta parameters (number of drugs)
   n_beta <- ncol(X)
 
-  # initialize loop
-  t <- Matrix(-abs(stats::rnorm(n_t)/10)) # Initializes a column vector to -abs( Normal(0,0.1) )
-  beta <- Matrix(rep(0,n_beta)) # Column of zeros
+  # initialize loop with msccs
+  msccs_model <- fitMSCCS( baseline_parameter_obs_period[ interval_baseline_parameter ], X, l, n, lambda1 )
 
-  lam1 <- parameters$lambda1
-  lam2 <- parameters$lambda2
-  lam3 <- parameters$lambda3
+  t <- msccs_model$alpha[ baseline_parameter_obs_period ]
+  beta <- Matrix(rep(0,n_beta)) # Column of zeros
 
   bestBeta <- beta
   bestT <- t
@@ -41,36 +40,36 @@ fitBR <- function( br_data, parameters = defineBRParameters() ){
   absOuter <- 200 # Dummy value that will be changed in iteration?
 
   # epsilon = 1e-3; # Not used??
-  thre <- parameters$threshold
+  thre <- 1e-6
   bestRes = Inf
 
-  for( outerCounter in 1:parameters$maxOuterLoopIterations ){
+  for( outerCounter in 1:max_outer_loop_iterations ){
 
     flog.trace( "Outer loop iteration %s", outerCounter )
 
     # eta
-    eta = X %*% beta + Z %*% t;
-    selector = eta+log(l)<log(1e-5);
-    logAlpha = 0; alpha = 1;
+    eta <- X %*% beta + t[ interval_baseline_parameter ];
+    selector <- eta + log(l) < log(1e-5);
+    logAlpha <- 0; alpha = 1;
 
-    logW = as.numeric(eta)+log(l); # Why "as numeric??"
-    logW[as.logical(selector)] = log(1e-5); # Could just replace with pmin( eta + log( l ), log( epsilon (=1e-5) ) )?
+    logW <- as.numeric(eta) + log(l); # Why "as numeric??"
+    logW[ as.logical(selector) ] <- log(1e-5); # Could just replace with pmin( eta + log( l ), log( epsilon (=1e-5) ) )?
 
     # working response
     psi = eta - alpha;
-    psi[n>0] = psi[n>0]+exp(logAlpha-logW)[n>0]*n[n>0];
+    psi[n>0] <- psi[n>0]+exp(logAlpha-logW)[n>0]*n[n>0];
 
     # weight for bwflsa
-    brBetaWeights = exp(logW-logAlpha);
-    omega = diag(t(Z) %*% Diagonal(x=brBetaWeights) %*% Z)+ 2*lam3;
+    brBetaWeights <- exp( logW - logAlpha )
+    omega = sumBy( x = brBetaWeights, groups = interval_baseline_parameter ) + 2*lam3;
 
 
-    for( innerCounter in 1:parameters$maxInnerLoopIterations ){
+    for( innerCounter in 1:max_inner_loop_iterations ){
 
       flog.trace( "Inner loop iteration %s", innerCounter )
 
       # beta step
-      brBetaResponse = psi-Z%*%t;
+      brBetaResponse = psi - t[ interval_baseline_parameter ];
 
       betaOld <- beta
 
@@ -87,9 +86,9 @@ fitBR <- function( br_data, parameters = defineBRParameters() ){
       }
 
       # t step
-      tau <- as.numeric(t(Z)%*%(brBetaWeights*(psi-X%*%beta)))/omega
+      tau <- sumBy( brBetaWeights * ( psi - X%*%beta ), interval_baseline_parameter )/omega
       tOld <- t
-      t <- blockwiseWeightedFusedLassoSignalApproximator(segIndx,tau,omega,lam2)
+      t <- blockwiseWeightedFusedLassoSignalApproximator( baseline_parameter_obs_period, tau, omega, lam2 )
       t <- Matrix(t)
 
       # stopping criteria
@@ -105,8 +104,8 @@ fitBR <- function( br_data, parameters = defineBRParameters() ){
 
     absOuter <- getAbsErr( rbind( tOldOld, betaOldOld ), rbind( t, beta ) );
 
-    betaErr = as.numeric( t(X)%*%( n - exp( log(l) + (X%*%beta+Z%*%t) ) ) );
-    betaRes = sqrt( mean(betaErr^2) );
+    betaErr <- as.numeric( t(X) %*% ( n - exp( log(l) + ( X%*%beta + t[interval_baseline_parameter] ) ) ) )
+    betaRes <- sqrt( mean(betaErr^2) );
 
     # update best
     if ( betaRes < bestRes ) {
@@ -133,8 +132,7 @@ fitBR <- function( br_data, parameters = defineBRParameters() ){
     } else {
       tOldOld = t; betaOldOld = beta;
     }
-
   }
 
-  list( beta = beta, t = t, res=betaRes, parameters = parameters, drug_concept_id = br_data$drug_concept_id, response_event = br_data$response_event )
+  list( beta = beta, t = t, res=betaRes, msccs = msccs_model )
 }
