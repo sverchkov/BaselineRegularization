@@ -5,8 +5,8 @@
 \title{Define Baseline Regularization parameters}
 \usage{
 defineBRParameters(lambda1 = 0, lambda2 = 0.5, lambda3 = 0.1,
-  threshold = 1e-04, maxOuterLoopIterations = 60,
-  maxInnerLoopIterations = 200)
+  threshold = 1e-04, max_outer_loop_iterations = 10000L,
+  max_inner_loop_iterations = 100000L, save_trajectory = F)
 }
 \arguments{
 \item{lambda1}{Main effect L1 regularization strength}
@@ -17,9 +17,11 @@ defineBRParameters(lambda1 = 0, lambda2 = 0.5, lambda3 = 0.1,
 
 \item{threshold}{Threshold for breaking out of inner loop early}
 
-\item{maxOuterLoopIterations}{Max outer loop iterations}
+\item{max_outer_loop_iterations}{Max outer loop iterations}
 
-\item{maxInnerLoopIterations}{Max inner loop iterations}
+\item{max_inner_loop_iterations}{Max inner loop iterations}
+
+\item{save_trajectory}{Whether to save all intermediate beta and t vectors (uses up lots of memory!)}
 }
 \value{
 a parameters object representing these parameter settings
