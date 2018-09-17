@@ -17,13 +17,8 @@
 #' @return 2-norm of a vector that specifies the degree of
 #' optimality violation
 #'
-#' @import dplyr
 #' @author Zhaobin Kuang
 checkKKT4BR = function(Z,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda3=0){
-
-  # Table for grouping things later on
-  baseline = tibble::tibble( obs_period = baseline_obs_period ) %>%
-    mutate( baseline_indx = row_number() )
 
   # total number of differences between adjacent basline parameters
   nBaselineDiff = sum( duplicated( baseline_obs_period ) )
@@ -34,8 +29,6 @@ checkKKT4BR = function(Z,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda
   w <- exp(log(l)+log_s)
   grad_t <- t(Z)%*%(w-n) + lambda3*t
   grad_beta <- t(X)%*%(w-n)/sum(l) + lambda1*beta
-
-  baseline <- baseline %>% mutate( t = t, grad_t = as.numeric(grad_t) )
 
   err <- do.call( c, lapply( unique( baseline_obs_period ), function( obs_period ){
 

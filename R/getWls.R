@@ -13,10 +13,11 @@
 #'
 #' @return beta the regression coefficient
 #'
+#' @import Matrix
 #' @author Zhaobin Kuang
 getWls = function(y,X,w,lambda,thresh=1e-7){
 
-  multiplier <- sqrt( weighted.mean( ( y - weighted.mean( y, w ) )^2, w ) )
+  multiplier <- sqrt( stats::weighted.mean( ( y - stats::weighted.mean( y, w ) )^2, w ) )
 
   lambda_seq <- lambda * multiplier * c( 50, 20, 7, 2, 1 )
 
@@ -26,7 +27,7 @@ getWls = function(y,X,w,lambda,thresh=1e-7){
                  standardize=FALSE,intercept=FALSE,thresh=thresh)
   }, error = function ( e ) {
     flog.error( "glmnet crashed." )
-    flog.debug( str( e ) )
+    flog.debug( utils::str( e ) )
     flog.debug( "y = ", y, capture = T )
     flog.trace( "X = ", X, capture = T )
     flog.debug( "w = ", w, capture = T )

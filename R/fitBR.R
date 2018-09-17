@@ -19,7 +19,7 @@
 #'
 #' @param lambda1 strength of ridge regression for beta
 #'
-#' @param labmda2 strengh of fused lasso for baseline
+#' @param lambda2 strengh of fused lasso for baseline
 #'
 #' @param lambda3 strength of ridge regression for baseline
 #'
@@ -36,6 +36,7 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
   max_inner_loop_iterations <- 1000000L
   outer_err_threshold <- 1e-6
   inner_err_threshold <- 1e-6
+  plateau_steps <- 10L # Number of iterations without change to trigger early termination
 
   # Interval grouping by baseline parameters, using which.max to get around "argument is not logical"
   interval_baseline <- apply( Z, 1, which.max )
@@ -55,16 +56,36 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
   t <- model_0$alpha[baseline_obs_period]
   beta <- model_0$beta
 
+  old_t <- 0
+  old_beta <- 0
+  plateau_counter <- 0L
+
   flog.debug("Starting BR optimization loop...")
 
-  converged <- FALSE
+  termination_reason <- c( "iter" = "reached maximum iterations." )
 
   # outer loop
   for ( outer_loop_iteration in 1: max_outer_loop_iterations ) {
 
     outer_err <- checkKKT4BR(Z,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda3)
     flog.debug( "Outer Loop Iteration %4d Error: %20.8f", outer_loop_iteration, outer_err )
-    if ( converged <- ( outer_err_threshold > outer_err ) ) break
+    if ( outer_err_threshold > outer_err ){
+      termination_reason <- c( "kkt" = "converged." )
+      break
+    }
+
+    # Plateau termination
+    if ( all( old_t == t ) && all( old_beta == beta ) ){
+      if ( plateau_counter < plateau_steps ) plateau_counter <- 1L + plateau_counter
+      else {
+        termination_reason <- c( "plateau" = "optimization plateaued." )
+        break
+      }
+    } else {
+      old_t <- t
+      old_beta <- beta
+      plateau_counter <- 0L
+    }
 
     log_s <- as.numeric( Z %*% t + X %*% beta )
     w <- exp( log(l) + log_s ) # Weight vector. of length # of intervals
@@ -108,10 +129,7 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
     }
   }
 
-  if( converged )
-    flog.debug( "BR converged.")
-  else
-    flog.debug( "BR reached maximum iterations.")
+  flog.debug( "BR %s", termination_reason )
 
   return( list( t=t, beta=beta, err=outer_err,
                 msccs_model = model_0 ) )

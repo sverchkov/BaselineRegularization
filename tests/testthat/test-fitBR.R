@@ -33,4 +33,5 @@ test_that("Regularized mini interval-tying single-patient model fit", {
 
   fit = fitBR( Z, interval_obs_period, X, l, n, lambda1 = 0.01, lambda2=0.05, lambda3 = 0 )
 
+  expect_equal( as.numeric( fit$beta ), c( 0.5286806212, 0.6699739 ) )
 })

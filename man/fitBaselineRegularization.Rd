@@ -7,7 +7,7 @@
 fitBaselineRegularization(br_data, parameters = defineBRParameters())
 }
 \arguments{
-\item{br_data}{data object produced by `prepareBRDataFrom*`}
+\item{br_data}{data object produced by [prepareBRData]}
 
 \item{parameters}{parameters object produced by [defineBRParameters]}
 }

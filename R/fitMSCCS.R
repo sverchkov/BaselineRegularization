@@ -1,11 +1,11 @@
-#' run MSCCS as an initialization for BR
+#' Run MSCCS as an initialization for BR
 #'
-#' run MSCCS given matrix and vector input data from BR
-#' currently only support ridge regression over drug effects
-#' currently only support single lambda
+#' Run MSCCS given matrix and vector input data from BR
+#' currently only supports ridge regression over drug effects
+#' currently only supports single lambda
 #' this is used to initialze BR
 #'
-#' @param obs_groups interval groups (observation periods)
+#' @param obs_group interval groups (observation periods)
 #' @param X drug exposure matrix
 #' @param l interval length
 #' @param n number of response condition occurrences in an interval
