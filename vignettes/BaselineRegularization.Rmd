@@ -160,7 +160,7 @@ br_data_omop_drugs <- prepareBRData(
 Nothing changes when fitting the model
 
 ```{r fit BR with omop drugs}
-fit_omop_drugs <- fitBaselineRegularization( br_data_omop_drugs )
+fit_omop_drugs <- fitBaselineRegularization( br_data_omop_drugs, defineBRParameters( lambda1 = 0.01 ) )
 ```
 
 And we can inspect the results with `getCoefficients` as before:
@@ -190,7 +190,7 @@ br_data_multiple_conditions <- prepareBRData(
   drug_concept_processor = drug_concept_processor ) # We can still specify drug categories
 
 # The call to the fit function doesn't change
-fit_multiple <- fitBaselineRegularization( br_data_multiple_conditions )
+fit_multiple <- fitBaselineRegularization( br_data_multiple_conditions, defineBRParameters( lambda1 = 0.01 ) )
 ```
 
 This yields a list of fits, one for each condition being modeled:
@@ -227,7 +227,7 @@ br_data_omop_conditions <- prepareBRData(
   condition_concept_processor = condition_concept_processor )
 
 # The call to the fit function doesn't change
-fit_omop <- fitBaselineRegularization( br_data_omop_conditions )
+fit_omop <- fitBaselineRegularization( br_data_omop_conditions, defineBRParameters( lambda1 = 0.01 ) )
 ```
 
 ## Using a database source for preparing the data

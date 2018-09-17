@@ -17,9 +17,11 @@
 #' @author Zhaobin Kuang
 getWls = function(y,X,w,lambda,thresh=1e-7){
 
-  multiplier <- sqrt( stats::weighted.mean( ( y - stats::weighted.mean( y, w ) )^2, w ) )
-
-  lambda_seq <- lambda * multiplier * c( 50, 20, 7, 2, 1 )
+  lambda_seq <- if( lambda > 0 ){
+    multiplier <- sqrt( stats::weighted.mean( ( y - stats::weighted.mean( y, w ) )^2, w ) )
+    lambda * multiplier * c( 50, 20, 7, 2, 1 )
+  } else
+    c( 20, 7, 2, 1, 0 )
 
   tryCatch({
     mdl = glmnet::glmnet(x=X,y=y,alpha=0,family="gaussian",weights=w,

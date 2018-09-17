@@ -32,7 +32,17 @@
 #' @author Zhaobin Kuang
 fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
 
-  max_outer_loop_iterations <- 10000L
+  # Initialize result
+  result <- list()
+
+  # Set up control
+  extra_args <- list( ... )
+
+  if ( save_trajectory <- valueOrDefault( extra_args$save_trajectory ) ){
+    result$trajectory <- list()
+  }
+
+  max_outer_loop_iterations <- valueOrDefault( extra_args$max_outer_loop_iterations, 10000L )
   max_inner_loop_iterations <- 1000000L
   outer_err_threshold <- 1e-6
   inner_err_threshold <- 1e-6
@@ -51,10 +61,10 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
 
   # initialize t and beta
   # Use MSCCS to initialize baseline parameters
-  model_0 <- fitMSCCS(interval_obs_period,X,l,n,lambda=lambda1,threshold=1e-7)
+  result$msccs_model <- fitMSCCS(interval_obs_period,X,l,n,lambda=lambda1,threshold=1e-7)
 
-  t <- model_0$alpha[baseline_obs_period]
-  beta <- model_0$beta
+  t <- result$msccs_model$alpha[baseline_obs_period]
+  beta <- result$msccs_model$beta
 
   old_t <- 0
   old_beta <- 0
@@ -75,7 +85,7 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
     }
 
     # Plateau termination
-    if ( all( old_t == t ) && all( old_beta == beta ) ){
+    if ( isTRUE( all.equal( old_t, t ) ) && isTRUE( all.equal( old_beta, beta ) ) ){
       if ( plateau_counter < plateau_steps ) plateau_counter <- 1L + plateau_counter
       else {
         termination_reason <- c( "plateau" = "optimization plateaued." )
@@ -127,12 +137,19 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
         w=omega,
         lambda = lambda2 * n_baseline_diff ) # lambda is scaled by # of baseline parameter adjacencies
     }
+
+    if ( save_trajectory ){
+      result$trajectory[[outer_loop_iteration]] <- list( t = t, beta = beta )
+    }
   }
 
   flog.debug( "BR %s", termination_reason )
 
-  return( list( t=t, beta=beta, err=outer_err,
-                msccs_model = model_0 ) )
+  result$t <- t
+  result$beta <- beta
+  result$err <- outer_err
+
+  return ( result )
 }
 
 
