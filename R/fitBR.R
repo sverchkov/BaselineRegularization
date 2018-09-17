@@ -5,10 +5,11 @@
 #' currently only support one pair of lambda1 and lambda2
 #' learning at a time
 #'
-#' @param Z design matrix that map tied baseline to
-#' baseline on each interval
+#' @param interval_baseline_parameter An array where each position corresponds to an interval and each value
+#' corresponds to the index of a baseline parameter
 #'
-#' @param interval_obs_period a vector indicating to which observation period/patient each interval belongs.
+#' @param baseline_parameter_obs_period An array where each position corresponds to a baseline parameter and each
+#' value corresponds to the index of an observation period
 #'
 #' @param X data matirx, each row represent data from
 #' one interval, each column represent drug exposure info
@@ -28,9 +29,11 @@
 #' @return a br model
 #'
 #' @export
+#' @import Matrix
 #' @import futile.logger
 #' @author Zhaobin Kuang
-fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
+#' @author Yuriy Sverchkov
+fitBR <- function( interval_baseline_parameter, baseline_parameter_obs_period, X, l, n, lambda1, lambda2, lambda3, ... ){
 
   # Initialize result
   result <- list()
@@ -48,22 +51,16 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
   inner_err_threshold <- 1e-6
   plateau_steps <- 10L # Number of iterations without change to trigger early termination
 
-  # Interval grouping by baseline parameters, using which.max to get around "argument is not logical"
-  interval_baseline <- apply( Z, 1, which.max )
-
-  # Mapping of patients to baseline parameters
-  baseline_obs_period <- interval_obs_period[ apply( Z, 2, which.max ) ]
-
   # total number of differences between adjacent basline parameters, which is
   # the number of distinct (tied) baseline parameters minus the number of patients
-  n_baseline_parameters <- ncol( Z )
-  n_baseline_diff <- n_baseline_parameters - length( unique( interval_obs_period ) )
+  n_baseline_parameters <- ncol( length( baseline_parameter_obs_period ) )
+  n_baseline_diff <- n_baseline_parameters - length( unique( baseline_parameter_obs_period ) )
 
   # initialize t and beta
   # Use MSCCS to initialize baseline parameters
-  result$msccs_model <- fitMSCCS(interval_obs_period,X,l,n,lambda=lambda1,threshold=1e-7)
+  result$msccs_model <- fitMSCCS( baseline_parameter_obs_period[ interval_baseline_parameter ], X, l, n, lambda=lambda1, threshold=1e-7)
 
-  t <- result$msccs_model$alpha[baseline_obs_period]
+  t <- result$msccs_model$alpha[ baseline_parameter_obs_period ]
   beta <- result$msccs_model$beta
 
   old_t <- 0
@@ -77,7 +74,7 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
   # outer loop
   for ( outer_loop_iteration in 1: max_outer_loop_iterations ) {
 
-    outer_err <- checkKKT4BR(Z,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda3)
+    outer_err <- checkKKT4BR( interval_baseline_parameter, baseline_parameter_obs_period, X, l, n, t, beta, lambda1, lambda2, lambda3 )
     flog.debug( "Outer Loop Iteration %4d Error: %20.8f", outer_loop_iteration, outer_err )
     if ( outer_err_threshold > outer_err ){
       termination_reason <- c( "kkt" = "converged." )
@@ -97,19 +94,19 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
       plateau_counter <- 0L
     }
 
-    log_s <- as.numeric( Z %*% t + X %*% beta )
+    log_s <- as.numeric( t[ interval_baseline_parameter ] + X %*% beta )
     w <- exp( log(l) + log_s ) # Weight vector. of length # of intervals
     w <- pmax( w, .Machine$double.xmin ) # Avoid crash due to 0 weights
     z <- as.numeric( log_s + n / (w) - 1 )
     tTilde <- t
     betaTilde <- beta
 
-    omega <- w %*% Z + 2*lambda3
+    omega <- sumBy( w, interval_baseline_parameter ) + 2*lambda3
 
     # inner loop
     for( inner_loop_iteration in 1:max_inner_loop_iterations ){
 
-      workingResponse <- z - Z %*% tTilde
+      workingResponse <- z - tTilde[ interval_baseline_parameter ]
 
       if ( inner_loop_iteration > 1 ) {
         # check inner loop optimality
@@ -129,10 +126,10 @@ fitBR = function(Z,interval_obs_period,X,l,n,lambda1,lambda2,lambda3=0,...){
       # ^ lambda is scaled by total interval length divided (why?) by the sum of weights
 
       # t step
-      nu <- ( t( Z ) %*% ( w * ( z - X %*% betaTilde ) ) ) / t( omega )
+      nu <- sumBy( w * ( z - X %*% betaTilde ), interval_baseline_parameter ) / omega
 
       tTilde <- blockwiseWeightedFusedLassoSignalApproximator(
-        indx = baseline_obs_period,
+        indx = baseline_parameter_obs_period,
         y=nu,
         w=omega,
         lambda = lambda2 * n_baseline_diff ) # lambda is scaled by # of baseline parameter adjacencies
