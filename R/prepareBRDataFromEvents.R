@@ -97,7 +97,7 @@ prepareBRDataFromEvents <- function ( all_events, event, tying ){
       bp_numbers <- ade_intervals %>% union( start_intervals ) %>%
         mutate( bp_inc = 1L ) %>%
         right_join( interval_details, by = "interval_number" ) %>%
-        mutate( if_else( is.na( !!br_symbol$bp_inc ), 0L, !!br_symbol$bp_inc ) ) %>%
+        mutate( bp_inc = if_else( is.na( !!br_symbol$bp_inc ), 0L, !!br_symbol$bp_inc ) ) %>%
         arrange( !!br_symbol$interval_number ) %>%
         mutate( baseline_parameter = cumsum( !!br_symbol$bp_inc ) ) %>%
         select( -!!br_symbol$bp_inc )

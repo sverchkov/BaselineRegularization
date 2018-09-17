@@ -51,10 +51,13 @@ fitBR <- function( interval_baseline_parameter, baseline_parameter_obs_period, X
   inner_err_threshold <- 1e-6
   plateau_steps <- 10L # Number of iterations without change to trigger early termination
 
-  # total number of differences between adjacent basline parameters, which is
-  # the number of distinct (tied) baseline parameters minus the number of patients
-  n_baseline_parameters <- ncol( length( baseline_parameter_obs_period ) )
-  n_baseline_diff <- n_baseline_parameters - length( unique( baseline_parameter_obs_period ) )
+  # Note: interval_baseline_parameter is a more compact representation of "Z" from the paper.
+  # For a vector v, up to transposition,
+  # v %*% Z = t(Z) %*% v = sumBy( v, interval_baseline_parameter )
+  # Z %*% v = v %* t(Z) = v[ interval_baseline_parameter ]
+
+  # total number of adjacent baseline parameters within observation periods
+  n_baseline_diff <- sum( duplicated( baseline_parameter_obs_period ) )
 
   # initialize t and beta
   # Use MSCCS to initialize baseline parameters

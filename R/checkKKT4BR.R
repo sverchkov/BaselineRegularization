@@ -18,16 +18,16 @@
 #' optimality violation
 #'
 #' @author Zhaobin Kuang
-checkKKT4BR = function(Z,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda3=0){
+checkKKT4BR = function(interval_baseline_parameter,baseline_obs_period,X,l,n,t,beta,lambda1,lambda2,lambda3=0){
 
   # total number of differences between adjacent basline parameters
   nBaselineDiff = sum( duplicated( baseline_obs_period ) )
     # nrow(baseline) - nrow( distinct( baseline, patientId ) )
 
   # gradient
-  log_s <- as.numeric(Z%*%t+X%*%beta)
+  log_s <- as.numeric( t[ interval_baseline_parameter ] + X%*%beta )
   w <- exp(log(l)+log_s)
-  grad_t <- t(Z)%*%(w-n) + lambda3*t
+  grad_t <- sumBy(w-n, interval_baseline_parameter) + lambda3*t
   grad_beta <- t(X)%*%(w-n)/sum(l) + lambda1*beta
 
   err <- do.call( c, lapply( unique( baseline_obs_period ), function( obs_period ){
