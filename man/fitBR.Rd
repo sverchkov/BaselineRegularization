@@ -4,14 +4,15 @@
 \alias{fitBR}
 \title{learn a baseline regularization (BR) model}
 \usage{
-fitBR(Z, interval_obs_period, X, l, n, lambda1, lambda2, lambda3 = 0,
-  ...)
+fitBR(interval_baseline_parameter, baseline_parameter_obs_period, X, l, n,
+  lambda1, lambda2, lambda3, ...)
 }
 \arguments{
-\item{Z}{design matrix that map tied baseline to
-baseline on each interval}
+\item{interval_baseline_parameter}{An array where each position corresponds to an interval and each value
+corresponds to the index of a baseline parameter}
 
-\item{interval_obs_period}{a vector indicating to which observation period/patient each interval belongs.}
+\item{baseline_parameter_obs_period}{An array where each position corresponds to a baseline parameter and each
+value corresponds to the index of an observation period}
 
 \item{X}{data matirx, each row represent data from
 one interval, each column represent drug exposure info}
@@ -39,4 +40,6 @@ learning at a time
 }
 \author{
 Zhaobin Kuang
+
+Yuriy Sverchkov
 }

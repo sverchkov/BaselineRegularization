@@ -3,7 +3,8 @@
 #' check the overall converge of BR
 #' used as the outer loop stopping criterion
 #'
-#' @param Z design matrix for intervals
+#' @param interval_baseline_parameter An array where each position corresponds to an interval and each value
+#' corresponds to the index of a baseline parameter
 #' @param baseline_obs_period vector where index is the baseline parameter index and value is observation period index
 #' @param X data matrix
 #' @param l length of each interval

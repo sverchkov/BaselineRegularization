@@ -4,11 +4,12 @@
 \alias{checkKKT4BR}
 \title{check convergence of baseline regularization (BR)}
 \usage{
-checkKKT4BR(Z, baseline_obs_period, X, l, n, t, beta, lambda1, lambda2,
-  lambda3 = 0)
+checkKKT4BR(interval_baseline_parameter, baseline_obs_period, X, l, n, t,
+  beta, lambda1, lambda2, lambda3 = 0)
 }
 \arguments{
-\item{Z}{design matrix for intervals}
+\item{interval_baseline_parameter}{An array where each position corresponds to an interval and each value
+corresponds to the index of a baseline parameter}
 
 \item{baseline_obs_period}{vector where index is the baseline parameter index and value is observation period index}
 
