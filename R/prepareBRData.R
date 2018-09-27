@@ -44,7 +44,7 @@ prepareBRData <- function ( con = NULL
 {
   # Check valuse and ensure types
 
-  if ( !( tying %in% c("occurrence", "interval" ) ) )
+  if ( !( tying %in% c("occurrence", "interval", "msccs" ) ) )
     stop( flog.fatal( "Invalid 'tying' parameter supplied (%s).", tying ) )
 
   minimum_duration <- as.integer( minimum_duration )
@@ -61,7 +61,7 @@ prepareBRData <- function ( con = NULL
 
     visit_occurrence <- getTable( con, visit_occurrence, "visit occurrence" )
 
-    flog.debug("Inferring observation periods")
+    flog.trace("Inferring observation periods")
     observation_period <- inferObservationPeriods( drug_era,
                                                    condition_era,
                                                    drug_exposure,
@@ -71,21 +71,22 @@ prepareBRData <- function ( con = NULL
       mutate( observation_period_id = !!br_symbol$person_id )
   }
 
+  flog.trace("Filtering observation periods")
   working_observation_periods <- observation_period %>%
     mutate( observation_period_length =
               1L + !!br_symbol$observation_period_end_date - !!br_symbol$observation_period_start_date ) %>%
     filter( !!br_symbol$observation_period_length >= minimum_duration ) %>%
     compute()
 
-  # Get drug durations from drug eras
+  flog.trace("Extracting drug intervals as events")
   drug_duration <-
-    if ( is.null( drug_era ) ){
+    if ( is.null( drug_era ) ){ # Get drug durations from drug exposures
       getDrugDurationsFromExposure(
         drug_concept_processor( drug_exposure,
                                 record_table_column = "drug_concept_id",
-                                out_column = "drug_concept_id" ) %>% compute(),
+                                out_column = "drug_concept_id" ),
         working_observation_periods )
-    } else {
+    } else { # Get drug durations from drug eras
       inner_join(
         drug_concept_processor( drug_era,
                                 record_table_column = "drug_concept_id",
@@ -108,6 +109,7 @@ prepareBRData <- function ( con = NULL
   drug_events <- getDrugEvents( drug_duration, risk_window )
 
   # Derive condition days
+  flog.trace( "Extracting condition days as events" )
   condition_events <-
     if ( is.null( condition_era ) ){
       getConditionEvents(
@@ -124,6 +126,7 @@ prepareBRData <- function ( con = NULL
         date_column = !!br_symbol$condition_era_start_date )
     }
 
+  flog.trace( "Building data from events")
   results <- Map( function( event_id ){
 
     condition_event_subset <- filter( condition_events, !!br_symbol$concept_id == event_id )
