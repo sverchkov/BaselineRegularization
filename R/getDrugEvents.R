@@ -39,7 +39,7 @@ getDrugEvents <- function( drug_durations, risk_window = 0 ) {
     # Merge overlapping drug durations, class-dependent implementations:
     flog.trace("Merging overlapping drug durations.")
 
-    drug_durations <- if ( T ){
+    drug_durations <- ftry( {
       # This implementation works for something full-featured like postgres but will fail with SQLite
       drug_durations %>%
         group_by( !!br_symbol$observation_period_id, !!br_symbol$concept_id ) %>%
@@ -58,7 +58,27 @@ getDrugEvents <- function( drug_durations, risk_window = 0 ) {
           merged_end_day = max( !!br_symbol$drug_end_day, na.rm = T ) ) %>%
         ungroup() %>%
         compute()
-    }
+    }, error = function ( e ) {
+      flog.info("Trying to recover by doing the calculation in R")
+      drug_durations %>%
+        group_by( !!br_symbol$observation_period_id, !!br_symbol$concept_id ) %>%
+        arrange( !!br_symbol$observation_period_id, !!br_symbol$concept_id,
+                 !!br_symbol$drug_start_day, !!br_symbol$drug_end_day ) %>%
+        collect() %>%
+        mutate( break_point =
+                  ifelse( lag( !!br_symbol$drug_end_day, default = -1L ) < !!br_symbol$drug_start_day,
+                          1L,
+                          0L )
+        ) %>%
+        mutate( merge_group = cumsum( !!br_symbol$break_point ) ) %>%
+        group_by( !!br_symbol$observation_period_id, !!br_symbol$observation_period_length,
+                  !!br_symbol$concept_id, !!br_symbol$merge_group ) %>%
+        summarize(
+          merged_start_day = min( !!br_symbol$drug_start_day, na.rm = T ),
+          merged_end_day = max( !!br_symbol$drug_end_day, na.rm = T ) ) %>%
+        ungroup() %>%
+        compute()
+    } )
 
     union_all(
       drug_durations %>%

@@ -136,7 +136,7 @@ prepareBRData <- function ( con = NULL
     }
 
     # Derive events
-    events_table <- union_all( drug_events, filter( condition_events, !!br_symbol$concept_id == event_id ) )
+    events_table <- union_all( filter( condition_events, !!br_symbol$concept_id == event_id ), drug_events, copy = TRUE )
 
     # Prepare data
     prepareBRDataFromEvents( events_table, event_id, tying )

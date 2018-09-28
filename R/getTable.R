@@ -25,7 +25,12 @@ getTable <- function( con, table, label = deparse( rlang::enexpr( table ) ) ){
       flog.info( msg = "Using %s table '%s' from the database.", label, table )
 
       # Return
-      return ( ftry( tbl( con, table ) ) )
+      return (
+        ftry( tbl( con, table ),
+              error = function( e ){
+                if ( grepl( "no such table", e ) ) NULL
+                else stop( e )
+              } ) )
 
     } else {
       flog.trace( "No valid DB connection provided, cannot infer table from %s, returning NULL.", label )

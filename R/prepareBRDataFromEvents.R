@@ -17,7 +17,12 @@
 #' @import dplyr
 prepareBRDataFromEvents <- function ( all_events, event, tying ){
 
-  all_events <- all_events %>% mutate( obs_period = dense_rank( !!br_symbol$observation_period_id ) )
+  all_events <- ftry( {
+    all_events %>% mutate( obs_period = dense_rank( !!br_symbol$observation_period_id ) ) %>% compute()
+  }, error = function( e ) {
+    flog.info( "Trying to recover by doing the computation outside the DB (can be very slow)" )
+    all_events %>% collect() %>% mutate( obs_period = dense_rank( !!br_symbol$observation_period_id ) )
+  } )
 
   # Make events for the ends of observation periods
   obs_start_events <- all_events %>%
