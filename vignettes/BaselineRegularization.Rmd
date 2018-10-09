@@ -231,13 +231,93 @@ fit_omop <- fitBaselineRegularization( br_data_omop_conditions, defineBRParamete
 ```
 
 ## Using a database source for preparing the data
-Coming soon!
+Typically, the patient data resides in a database, and we designed `prepareBRData` to work with databases.
+There are two approaches to working with `BaselineRegularization` using a database, explicitly, by providing a connection object, or implicitly, using `dplyr` (and `dbplyr`).
+
+### Providing a connection object
+We use the `DBI` API (available on CRAN) for database access.
+To create a connection object, your code will look something like this:
+
+```{r make DBI con, eval=FALSE}
+con <- DBI::dbConnect( RPostgreSQL::PostgreSQL() # Database driver
+                     , host = "localhost"        # Host name/IP
+                     , user = "user"             # Username
+                     , dbname = "omop_example"   # Database name
+                     , password = rstudioapi::askForPassword("Database Password") )
+                     # This opens a dialogue if you're using RStudio.
+                     # Never include passwords in source code.
+```
+
+The particular arguments to `DBI::dbConnect` will depend on the database driver selected.
+See [this guide](https://db.rstudio.com/dplyr/#connecting-to-the-database) for a more comprehensive overview of using `DBI` for database connection.
+
+You can also use the `DatabaseConnector` package available on CRAN and at https://github.com/OHDSI/DatabaseConnector to create the connection object:
+```{r make DatabaseConnector con, eval=FALSE}
+library(DatabaseConnector)
+
+connectionDetails <- createConnectionDetails(dbms="postgresql", 
+                                             server="localhost",
+                                             user="user",
+                                             password=rstudioapi::askForPassword("Database Password"),
+                                             schema="cdm_v4")
+con <- connect(connectionDetails)
+```
+(see the documentation for `DatabaseConnector` for more details).
+
+Once you have a connection object, you can simply pass it to `prepareBRData`
+```{r prepare data with con, eval=FALSE}
+# Extract relevant data
+br_data <- prepareBRData( con = con, response_event = response_event )
+```
+This will try to use the default lower-case names for clinical data, specifically:
+
+  * For drug intervals, will try to use the `drug_era` table, if no such table is found, will try to derive drug intervals from the `drug_exposure` table, if neither is found, fails with an error.
+  * For condition occurrences, will try to use the `condition_era` table, if no such table is found, will try to use the `condition_occurrence` table, if neither is found, fails with an error.
+  * Observation periods will be taken from a table named `"observation_period"`, if no such table is found, will try to use infer the observation periods (one per patient) from as many of the following tables as are found in the database:
+     * `drug_era`
+     * `condition_era`
+     * `drug_exposure`
+     * `condition_occurrence`
+     * `visit_occurrence`
+
+Some additional common customization options:
+
+  * If the names of the tables are different, you can specify them as strings along with the connection object.
+  * If your database has a derived table but for some reason you don't want it to be used, you can explicitly set the corresponding parameter to `NULL`.
+  
+```{r prepare data with con customized, eval=FALSE}
+br_data <- prepareBRData( con = con,
+                          observation_period = "OBSERVATION_PERIOD", # Different capitalization from the default
+                          drug_era = "my_drug_era_table", # Different table name to use
+                          condition_era = NULL, # Don't use condition_era from the DB
+                          response_event = response_event )
+```
+
+As in the examples above using data frames, one can use condition and drug category processors and pass multiple response events at once.
+`ancestorConceptProcessor` can also accept a `con` parameter along with which you can specify the ancestry table by name.
+
+### Using `dplyr` and `dbplyr`
+Instead of passing a connection object explicitly, one can use `dplyr` and `dbplyr` to get R data table-like representations of database tables.
+This can be useful if you want to perform some of your own data manipulation before passing the tables to `prepareBRData`.
+
+E.g, given a connection object (see above), one can use
+```{r using dplyr, eval=FALSE}
+observation_period_tbl <- tbl( con, `observation_period` )
+```
+and further manipulate `observation_period_tbl` with `dplyr` verbs.
+See the documentation for `dplyr` and `dbplyr` for more details.
+
+This is in fact what `prepareBRData` does internally when you specify a connection object and provide table names.
 
 ## Using derived CDM tables for preparing the data
-Coming soon!
+One can provide the `drug_era` and `condition_era` tables instead of the `drug_exposure` and `condition_occurrence` tables.
 
-## Additional data preparation options
-Coming soon!
+```{r using derived tables, eval=FALSE}
+br_data <- prepareBRData(
+  observation_period = observation_period,
+  condition_era = condition_era,
+  drug_era = drug_era,
+  response_event = response_event )
+```
 
-## Using non-CDM data
-The data preparation functions were designed for OMOP CDM data, but they are quite flexible, and, could be applied to any data that provides the right columns. (TODO: Expand on this)
+As mentioned above, `prepareBRData` prioritizes the former over the latter when both are provided.
