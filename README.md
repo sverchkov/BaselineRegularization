@@ -67,11 +67,32 @@ Requires R (version 3.0.0 or greater).
 Dependencies
 ------------
 
- * dplyr (Version 0.7.5 or greater)
- * glmnet
- * Matrix
+Always required:
 
-* We use the [GitHub issue tracker](https://github.com/sverchkov/BaselineRegularization/issues) for bugs and feature requests
+ * rlang (>= 0.2)
+ * Matrix (>= 1.2)
+ * dplyr (>= 0.7)
+ * tidyr (>= 0.8)
+ * glmnet (>= 2.0)
+ * futile.logger (>= 1.4)
+
+Required for database access:
+
+ * DBI (>= 1.0.0),
+ * dbplyr (>= 1.2),
+ * Database drivers, depending on the database being accessed, e.g.
+    * RPostgreSQL
+    * RSQLite
+
+Required for building the documentation:
+
+ * knitr
+ * rmarkdown
+
+Required for testing:
+
+ * testthat (>= 2.0.0)
+
 
 License
 -------
@@ -83,7 +104,22 @@ Development
 
 BaselineRegularization is being developed in R Studio.
 
-Acknowledgements
-----------------
 
-TODO
+We use the [GitHub issue tracker](https://github.com/sverchkov/BaselineRegularization/issues) for bugs and feature requests
+
+
+References
+----------
+
+Original papers describing the underlying algorithms:
+
+ * Kuang, Z. et al. (2016).
+   [Computational drug repositioning using continuous self-controlled case series.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5351812/) _In: Proceedings of the 22nd
+ACM SIGKDD International Conference on Knowledge Discovery
+and Data Mining._ ACM, pp. 491-500.
+ * Kuang, Z. et al. (2017).
+   [Pharmacovigilance via Baseline Regularization with Large-Scale Longitudinal Observational Data.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5945223/)
+_In: Proceedings of the 23rd ACM SIGKDD International Conference
+on Knowledge Discovery and Data Mining._ ACM, pp. 1537-1546.
+
+[OHDSI Symposium 2018 poster](https://drive.google.com/drive/folders/1DBPJuD1pnXc6LPYqB4fpy7ohI30Uo4bR)
